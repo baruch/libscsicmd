@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
+import sys
 import xml.etree.ElementTree as ET
 
-tree = ET.parse('smartdb.xml')
+tree = ET.parse(sys.argv[1])
 root = tree.getroot()
 
 assert root.tag == 'smartdb'
