@@ -93,5 +93,8 @@ print '};'
 
 print 'const smart_table_t * smart_table_for_disk(const char *vendor, const char *model, const char *firmware)'
 print '{'
+print '(void)vendor;'
+print '(void)model;'
+print '(void)firmware;'
 print 'return &defaults;'
 print '}'
