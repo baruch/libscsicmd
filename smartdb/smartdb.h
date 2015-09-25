@@ -23,6 +23,7 @@ struct smart_attr {
 	uint8_t id;
 	smart_attr_type_e type;
 	smart_attr_raw_e raw;
+	int offset;
 	const char *name;
 };
 

@@ -93,6 +93,7 @@
     <attr>
       <id>194</id>
       <name>Temperature</name>
+      <tempoffset>150</tempoffset>
     </attr>
     <attr>
       <id>195</id>
