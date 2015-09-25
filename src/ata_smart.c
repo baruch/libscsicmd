@@ -1,7 +1,7 @@
 #include "ata_smart.h"
 #include <stdlib.h>
 
-int ata_smart_get_temperature(const ata_smart_attr_t *attrs, int num_attrs, const smart_table_t *table, int *min_temp, int *max_temp)
+int ata_smart_get_temperature(const ata_smart_attr_t *attrs, int num_attrs, const smart_table_t *table, int *pmin_temp, int *pmax_temp)
 {
 	const smart_attr_t *attr_info;
 	int i;
@@ -14,11 +14,15 @@ int ata_smart_get_temperature(const ata_smart_attr_t *attrs, int num_attrs, cons
 		if (attrs[i].id == attr_info->id) {
 			// Temperature is 150 minus the current value
 			int temp = 150 - attrs[i].value;
-			if (temp == (int)(attrs[i].raw & 0xFFFF)) {
-				*min_temp = (attrs[i].raw >> 16) & 0xFFFF;
-				*max_temp = (attrs[i].raw >> 32) & 0xFFFF;
+			int cur_temp = attrs[i].raw & 0xFFFF;
+			int min_temp = (attrs[i].raw >> 16) & 0xFFFF;
+			int max_temp = (attrs[i].raw >> 32) & 0xFFFF;
+
+			if (temp == cur_temp && max_temp >= temp && min_temp <= temp) {
+				*pmin_temp = min_temp;
+				*pmax_temp = max_temp;
 			} else {
-				*min_temp = *max_temp = -1;
+				*pmin_temp = *pmax_temp = -1;
 			}
 			return temp;
 		}
