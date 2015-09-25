@@ -1,7 +1,7 @@
 #!/usr/bin/python
 
 lib_srcs = [
-        'cdb.c', 'parse_inquiry.c', 'ata.c', 'parse_sense.c', 'parse_read_cap.c', 'str_map.c',
+        'cdb.c', 'parse_inquiry.c', 'ata.c', 'parse_sense.c', 'parse_read_cap.c', 'str_map.c', 'ata_smart.c',
         '../smartdb/smartdb.c', '../smartdb/smartdb_gen.c',
 ]
 

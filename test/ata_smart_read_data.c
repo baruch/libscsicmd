@@ -16,6 +16,7 @@
 
 #include "ata.h"
 #include "ata_parse.h"
+#include "ata_smart.h"
 #include "main.h"
 #include "smartdb.h"
 #include <stdio.h>
@@ -123,5 +124,13 @@ void do_command(int fd)
 		const ata_smart_thresh_t *thresh = &thresholds[i];
 		const smart_attr_t *attr_type = smart_attr_for_id(table, attr->id);
 		printf("Attribute #%2d: id %3u %-40s status %04X val %3u min %3u thresh %3u raw %"PRIu64"\n", i, attr->id, attr_type ? attr_type->name : "Unknown", attr->status, attr->value, attr->min, thresh->threshold, attr->raw);
+	}
+
+
+	printf("\nKey attributes:\n");
+	{
+		int min_temp, max_temp, cur_temp;
+		cur_temp = ata_smart_get_temperature(attrs, num_attrs1, table, &min_temp, &max_temp);
+		printf("  Temperature: %d (min=%d max=%d)\n", cur_temp, min_temp, max_temp);
 	}
 }

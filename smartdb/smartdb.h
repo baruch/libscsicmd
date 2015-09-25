@@ -33,5 +33,6 @@ struct smart_table {
 
 const smart_table_t *smart_table_for_disk(const char *vendor, const char *model, const char *firmware);
 const smart_attr_t *smart_attr_for_id(const smart_table_t *table, uint8_t id);
+const smart_attr_t *smart_attr_for_type(const smart_table_t *table, smart_attr_type_e attr_type);
 
 #endif
