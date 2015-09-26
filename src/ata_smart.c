@@ -34,3 +34,22 @@ int ata_smart_get_temperature(const ata_smart_attr_t *attrs, int num_attrs, cons
 	return -1;
 
 }
+
+int ata_smart_get_power_on_hours(const ata_smart_attr_t *attrs, int num_attrs, const smart_table_t *table, int *pminutes)
+{
+	const smart_attr_t *attr_info;
+	int i;
+
+	attr_info = smart_attr_for_type(table, SMART_ATTR_TYPE_POH);
+	if (attr_info == NULL)
+		return -1;
+
+	for (i = 0; i < num_attrs; i++) {
+		if (attrs[i].id == attr_info->id) {
+			*pminutes = -1;
+			return attrs[i].raw;
+		}
+	}
+
+	return -1;
+}

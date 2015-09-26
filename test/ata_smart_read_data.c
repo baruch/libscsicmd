@@ -133,4 +133,10 @@ void do_command(int fd)
 		cur_temp = ata_smart_get_temperature(attrs, num_attrs1, table, &min_temp, &max_temp);
 		printf("  Temperature: %d (min=%d max=%d)\n", cur_temp, min_temp, max_temp);
 	}
+	{
+		int minutes = -1;
+		int hours;
+		hours = ata_smart_get_power_on_hours(attrs, num_attrs1, table, &minutes);
+		printf("  POH: %d (minutes: %d)\n", hours, minutes);
+	}
 }
