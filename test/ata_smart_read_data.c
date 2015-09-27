@@ -141,4 +141,5 @@ void do_command(int fd)
 	}
 	printf("  # Reallocations: %d\n", ata_smart_get_num_reallocations(attrs, num_attrs1, table));
 	printf("  # Pending Reallocations: %d\n", ata_smart_get_num_pending_reallocations(attrs, num_attrs1, table));
+	printf("  # CRC Errors: %d\n", ata_smart_get_num_crc_errors(attrs, num_attrs1, table));
 }

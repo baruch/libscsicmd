@@ -25,10 +25,15 @@ attr_code = {
     'temperature': 'SMART_ATTR_TYPE_TEMP',
     'reallocations': 'SMART_ATTR_TYPE_REALLOC',
     'pending_reallocations': 'SMART_ATTR_TYPE_REALLOC_PENDING',
+    'crc_count': 'SMART_ATTR_TYPE_CRC_ERRORS',
 }
 attr_code_default = 'none'
 def attr_code_to_enum(code):
-    return attr_code.get(code)
+    try:
+        return attr_code[code]
+    except KeyError:
+        sys.stderr.write('Cannot find key "%s" in the known attribute code list: %s\n' % (code, attr_code.keys()))
+        raise
 
 def validate_name(c, root):
     assert root.tag == 'name'

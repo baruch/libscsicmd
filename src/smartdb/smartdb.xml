@@ -17,7 +17,7 @@
     <name>Reallocation Event Count</name>
     <name type="pending_reallocations">Pending Sector Reallocation Count</name>
     <name>Off-Line Scan Uncorrecable Sector Count</name>
-    <name>CRC Error Count</name>
+    <name type="crc_count">CRC Error Count</name>
     <name>Total LBAs Written</name>
     <name>Multi-zone Error Rate</name>
     <name>Drive Calibration Retry Count</name>

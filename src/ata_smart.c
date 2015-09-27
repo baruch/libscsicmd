@@ -76,3 +76,8 @@ int ata_smart_get_num_pending_reallocations(const ata_smart_attr_t *attrs, int n
 {
 	return ata_smart_get_simple(attrs, num_attrs, table, SMART_ATTR_TYPE_REALLOC_PENDING);
 }
+
+int ata_smart_get_num_crc_errors(const ata_smart_attr_t *attrs, int num_attrs, const smart_table_t *table)
+{
+	return ata_smart_get_simple(attrs, num_attrs, table, SMART_ATTR_TYPE_CRC_ERRORS);
+}

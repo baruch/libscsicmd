@@ -12,6 +12,7 @@ typedef enum smart_attr_type {
 	SMART_ATTR_TYPE_TEMP,
 	SMART_ATTR_TYPE_REALLOC,
 	SMART_ATTR_TYPE_REALLOC_PENDING,
+	SMART_ATTR_TYPE_CRC_ERRORS,
 } smart_attr_type_e;
 
 typedef enum smart_attr_raw {
