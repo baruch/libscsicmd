@@ -22,6 +22,18 @@ static const smart_attr_t *ata_smart_get(const ata_smart_attr_t *attrs, int num_
 	return NULL;
 }
 
+static int ata_smart_get_simple(const ata_smart_attr_t *attrs, int num_attrs, const smart_table_t *table, smart_attr_type_e attr_type)
+{
+	const smart_attr_t *attr_info;
+	const ata_smart_attr_t *smart_attr;
+
+	attr_info = ata_smart_get(attrs, num_attrs, table, &smart_attr, attr_type);
+	if (attr_info == NULL)
+		return -1;
+
+	return smart_attr->raw;
+}
+
 int ata_smart_get_temperature(const ata_smart_attr_t *attrs, int num_attrs, const smart_table_t *table, int *pmin_temp, int *pmax_temp)
 {
 	const smart_attr_t *attr_info;
@@ -51,13 +63,16 @@ int ata_smart_get_temperature(const ata_smart_attr_t *attrs, int num_attrs, cons
 
 int ata_smart_get_power_on_hours(const ata_smart_attr_t *attrs, int num_attrs, const smart_table_t *table, int *pminutes)
 {
-	const smart_attr_t *attr_info;
-	const ata_smart_attr_t *smart_attr;
-
-	attr_info = ata_smart_get(attrs, num_attrs, table, &smart_attr, SMART_ATTR_TYPE_POH);
-	if (attr_info == NULL)
-		return -1;
-
 	*pminutes = -1;
-	return attrs[i].raw;
+	return ata_smart_get_simple(attrs, num_attrs, table, SMART_ATTR_TYPE_POH);
+}
+
+int ata_smart_get_num_reallocations(const ata_smart_attr_t *attrs, int num_attrs, const smart_table_t *table)
+{
+	return ata_smart_get_simple(attrs, num_attrs, table, SMART_ATTR_TYPE_REALLOC);
+}
+
+int ata_smart_get_num_pending_reallocations(const ata_smart_attr_t *attrs, int num_attrs, const smart_table_t *table)
+{
+	return ata_smart_get_simple(attrs, num_attrs, table, SMART_ATTR_TYPE_REALLOC_PENDING);
 }

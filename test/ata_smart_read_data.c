@@ -139,4 +139,6 @@ void do_command(int fd)
 		hours = ata_smart_get_power_on_hours(attrs, num_attrs1, table, &minutes);
 		printf("  POH: %d (minutes: %d)\n", hours, minutes);
 	}
+	printf("  # Reallocations: %d\n", ata_smart_get_num_reallocations(attrs, num_attrs1, table));
+	printf("  # Pending Reallocations: %d\n", ata_smart_get_num_pending_reallocations(attrs, num_attrs1, table));
 }
