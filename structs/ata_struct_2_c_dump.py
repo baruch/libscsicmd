@@ -51,7 +51,7 @@ def emit_prefix():
 	print('#include <stdio.h>')
 
 def emit_suffix():
-	print()
+	print('')
 
 def convert_def(filename):
 	f = file(filename)
