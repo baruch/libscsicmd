@@ -4,7 +4,8 @@ project(libscsicmd)
 export(PACKAGE libscsicmd)
 
 include_directories("include")
-add_compile_options(-Wall -Wextra -Wshadow -Wmissing-prototypes -Winit-self -D_GNU_SOURCE -D_FORTIFY_SOURCE=2)
+add_compile_options(-Wall -Wextra -Wshadow -Wmissing-prototypes -Winit-self)
+add_definitions(-D_GNU_SOURCE -D_FORTIFY_SOURCE=2)
 
 add_custom_command(OUTPUT src/smartdb/smartdb_gen.c
                    COMMAND src/smartdb/smartdb_gen_c.py src/smartdb/smartdb.xml > src/smartdb/smartdb_gen.c
