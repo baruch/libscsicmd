@@ -48,6 +48,7 @@ def emit_header(structs):
 def emit_prefix():
 	print('#include "ata.h"')
 	print('#include "ata_parse.h"')
+	print('#include "ata_identify_dump.h"')
 	print('#include <stdio.h>')
 
 def emit_suffix():
