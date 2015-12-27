@@ -162,3 +162,30 @@ int cdb_send_diagnostics(unsigned char *cdb, self_test_code_e self_test, uint16_
 	cdb[5] = 0;
 	return LEN;
 }
+
+int cdb_mode_sense_6(unsigned char *cdb, bool disable_block_descriptor, page_control_e page_control, uint8_t page_code, uint8_t subpage_code, uint8_t alloc_len)
+{
+	const int LEN = 6;
+	cdb[0] = 0x1A;
+	cdb[1] = disable_block_descriptor ? (1<<3) : 0;
+	cdb[2] = (page_control << 6) | page_code;
+	cdb[3] = subpage_code;
+	cdb[4] = alloc_len;
+	cdb[5] = 0;
+	return LEN;
+}
+
+int cdb_mode_sense_10(unsigned char *cdb, bool long_lba_accepted, bool disable_block_descriptor, page_control_e page_control, uint8_t page_code, uint8_t subpage_code, uint16_t alloc_len)
+{
+	const int LEN = 10;
+	cdb[0] = 0x5A;
+	cdb[1] = (long_lba_accepted ? 1<<4 : 0) | (disable_block_descriptor ? 1<<3 : 0);
+	cdb[2] = (page_control << 6) | page_code;
+	cdb[3] = subpage_code;
+	cdb[4] = 0;
+	cdb[5] = 0;
+	cdb[6] = 0;
+	set_uint16(cdb, 7, alloc_len);
+	cdb[9] = 0;
+	return LEN;
+}

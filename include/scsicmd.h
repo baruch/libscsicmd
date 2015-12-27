@@ -168,6 +168,16 @@ int cdb_write_16(unsigned char *cdb, bool dpo, bool fua, bool fua_nv, uint64_t l
 /* log sense */
 int cdb_log_sense(unsigned char *cdb, uint8_t page_code, uint8_t subpage_code, uint16_t alloc_len);
 
+/* mode sense */
+typedef enum {
+	PAGE_CONTROL_CURRENT = 0,
+	PAGE_CONTROL_CHANGEABLE = 1,
+	PAGE_CONTROL_DEFAULT = 2,
+	PAGE_CONTROL_SAVED = 3,
+} page_control_e;
+int cdb_mode_sense_6(unsigned char *cdb, bool disable_block_descriptor, page_control_e page_control, uint8_t page_code, uint8_t subpage_code, uint8_t alloc_len);
+int cdb_mode_sense_10(unsigned char *cdb, bool long_lba_accepted, bool disable_block_descriptor, page_control_e page_control, uint8_t page_code, uint8_t subpage_code, uint16_t alloc_len);
+
 /* send/receive diagnostics */
 int cdb_receive_diagnostics(unsigned char *cdb, uint8_t page_code, uint16_t alloc_len);
 
