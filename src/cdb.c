@@ -140,3 +140,25 @@ int cdb_log_sense(unsigned char *cdb, uint8_t page_code, uint8_t subpage_code, u
 	set_uint16(cdb, 7, alloc_len);
 	return LEN;
 }
+
+int cdb_receive_diagnostics(unsigned char *cdb, uint8_t page_code, uint16_t alloc_len)
+{
+	const int LEN = 6;
+	cdb[0] = 0x1C;
+	cdb[1] = 0;
+	cdb[2] = page_code;
+	set_uint16(cdb, 3, alloc_len);
+	cdb[5] = 0;
+	return LEN;
+}
+
+int cdb_send_diagnostics(unsigned char *cdb, self_test_code_e self_test, uint16_t param_len)
+{
+	const int LEN = 6;
+	cdb[0] = 0x1D;
+	cdb[1] = self_test << 5;
+	cdb[2] = 0;
+	set_uint16(cdb, 3, param_len);
+	cdb[5] = 0;
+	return LEN;
+}

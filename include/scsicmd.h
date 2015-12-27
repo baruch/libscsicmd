@@ -168,4 +168,19 @@ int cdb_write_16(unsigned char *cdb, bool dpo, bool fua, bool fua_nv, uint64_t l
 /* log sense */
 int cdb_log_sense(unsigned char *cdb, uint8_t page_code, uint8_t subpage_code, uint16_t alloc_len);
 
+/* send/receive diagnostics */
+int cdb_receive_diagnostics(unsigned char *cdb, uint8_t page_code, uint16_t alloc_len);
+
+typedef enum {
+	SELF_TEST_ZERO = 0,
+	SELF_TEST_BACKGROUND_SHORT = 1,
+	SELF_TEST_BACKGROUND_EXTENDED = 2,
+	SELF_TEST_RESERVED1 = 3,
+	SELF_TEST_BACKGROUND_ABORT = 4,
+	SELF_TEST_FOREGROUND_SHORT = 5,
+	SELF_TEST_FOREGROUND_EXTENDED = 6,
+	SELF_TEST_RESERVED2 = 7,
+} self_test_code_e;
+int cdb_send_diagnostics(unsigned char *cdb, self_test_code_e self_test, uint16_t param_len);
+
 #endif
