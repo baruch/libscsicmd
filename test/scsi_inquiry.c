@@ -160,6 +160,7 @@ static void do_simple_inquiry(int fd)
 	}
 
 	printf("Read %u bytes\n", buf_len);
+	response_dump(buf, buf_len);
 
 	int device_type;
 	scsi_vendor_t vendor;
