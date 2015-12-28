@@ -33,6 +33,8 @@ bool submit_cmd(int fd, unsigned char *cdb, unsigned cdb_len, unsigned char *buf
 {
 	sg_io_hdr_t hdr;
 
+	cdb_dump(cdb, cdb_len);
+
 	memset(&hdr, 0, sizeof(hdr));
 
 	hdr.interface_id = 'S';
