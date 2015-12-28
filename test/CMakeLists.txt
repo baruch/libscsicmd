@@ -38,3 +38,6 @@ target_link_libraries(scsi_read_capacity_16 testlib scsicmd)
 
 add_executable(sense_decode sense_decode.c)
 target_link_libraries(sense_decode testlib scsicmd)
+
+add_executable(collect_raw_data collect_raw_data.c)
+target_link_libraries(collect_raw_data testlib scsicmd)
