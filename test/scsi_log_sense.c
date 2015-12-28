@@ -18,6 +18,7 @@
 #include "scsicmd_utils.h"
 
 #include "main.h"
+#include "sense_dump.h"
 #include <stdio.h>
 #include <memory.h>
 #include <errno.h>

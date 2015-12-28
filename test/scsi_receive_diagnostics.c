@@ -17,6 +17,7 @@
 #include "scsicmd.h"
 #include "parse_receive_diagnostics.h"
 #include "main.h"
+#include "sense_dump.h"
 
 #include <stdio.h>
 #include <memory.h>

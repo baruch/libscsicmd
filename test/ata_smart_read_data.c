@@ -17,6 +17,7 @@
 #include "ata.h"
 #include "ata_parse.h"
 #include "ata_smart.h"
+#include "sense_dump.h"
 #include "main.h"
 #include "smartdb.h"
 #include <stdio.h>

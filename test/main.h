@@ -13,6 +13,4 @@ static inline bool read_response(int fd, unsigned char **sense, unsigned *sense_
 	return read_response_buf(fd, sense, sense_len, NULL);
 }
 
-void response_dump(unsigned char *buf, int buf_len);
-
 #endif
