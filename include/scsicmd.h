@@ -179,7 +179,7 @@ int cdb_mode_sense_6(unsigned char *cdb, bool disable_block_descriptor, page_con
 int cdb_mode_sense_10(unsigned char *cdb, bool long_lba_accepted, bool disable_block_descriptor, page_control_e page_control, uint8_t page_code, uint8_t subpage_code, uint16_t alloc_len);
 
 /* send/receive diagnostics */
-int cdb_receive_diagnostics(unsigned char *cdb, uint8_t page_code, uint16_t alloc_len);
+int cdb_receive_diagnostics(unsigned char *cdb, bool page_code_valid, uint8_t page_code, uint16_t alloc_len);
 
 typedef enum {
 	SELF_TEST_ZERO = 0,

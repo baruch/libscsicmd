@@ -141,11 +141,11 @@ int cdb_log_sense(unsigned char *cdb, uint8_t page_code, uint8_t subpage_code, u
 	return LEN;
 }
 
-int cdb_receive_diagnostics(unsigned char *cdb, uint8_t page_code, uint16_t alloc_len)
+int cdb_receive_diagnostics(unsigned char *cdb, bool page_code_valid, uint8_t page_code, uint16_t alloc_len)
 {
 	const int LEN = 6;
 	cdb[0] = 0x1C;
-	cdb[1] = 0;
+	cdb[1] = page_code_valid ? 1 : 0;
 	cdb[2] = page_code;
 	set_uint16(cdb, 3, alloc_len);
 	cdb[5] = 0;

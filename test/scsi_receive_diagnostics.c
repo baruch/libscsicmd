@@ -38,7 +38,7 @@ static void dump_page(int fd, uint8_t page, uint8_t subpage)
 {
 	unsigned char cdb[32];
 	unsigned char buf[16*1024];
-	unsigned cdb_len = cdb_receive_diagnostics(cdb, page, sizeof(buf));
+	unsigned cdb_len = cdb_receive_diagnostics(cdb, true, page, sizeof(buf));
 
 	printf("List page %02X subpage %02X\n", page, subpage);
 	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
@@ -66,7 +66,7 @@ void do_command(int fd)
 {
 	unsigned char cdb[32];
 	unsigned char buf[16*1024];
-	unsigned cdb_len = cdb_receive_diagnostics(cdb, 0, sizeof(buf));
+	unsigned cdb_len = cdb_receive_diagnostics(cdb, true, 0, sizeof(buf));
 
 	printf("List all supported pages\n");
 	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
