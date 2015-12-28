@@ -90,7 +90,7 @@ void do_command(int fd)
 	response_dump(buf, buf_len);
 
 	if (buf_len < RECV_DIAG_MIN_LEN) {
-		printf("log sense list must have at least 4 bytes\n");
+		printf("receive diagnostics list must have at least 4 bytes\n");
 		return;
 	}
 
