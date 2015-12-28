@@ -35,13 +35,13 @@ static inline uint16_t get_uint16(unsigned char *buf, int start)
 		   (uint16_t)buf[start+1];
 }
 
-static void dump_page(int fd, uint8_t page, uint8_t subpage)
+static void dump_page(int fd, uint8_t page)
 {
 	unsigned char cdb[32];
 	unsigned char buf[16*1024];
 	unsigned cdb_len = cdb_receive_diagnostics(cdb, true, page, sizeof(buf));
 
-	printf("List page %02X subpage %02X\n", page, subpage);
+	printf("List page %02X\n", page);
 	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
 	if (!ret) {
 		fprintf(stderr, "Failed to submit command\n");
@@ -102,6 +102,6 @@ void do_command(int fd)
 	uint16_t num_pages = recv_diag_get_len(buf);
 	uint16_t i;
 	for (i = 0; i < num_pages; i++) {
-		dump_page(fd, buf[4 + i], 0);
+		dump_page(fd, buf[4 + i]);
 	}
 } 
