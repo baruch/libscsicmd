@@ -25,6 +25,13 @@ static inline uint16_t get_uint16(unsigned char *buf, int start)
 		   (uint16_t)buf[start+1];
 }
 
+static inline uint32_t get_uint24(unsigned char *buf, int start)
+{
+	return (uint32_t)buf[start] << 16 |
+		   (uint32_t)buf[start+1] << 8 |
+		   (uint32_t)buf[start+2];
+}
+
 static inline void get_uint32(unsigned char *buf, int start, uint32_t *val)
 {
 	*val = (uint32_t)buf[start] << 24 |

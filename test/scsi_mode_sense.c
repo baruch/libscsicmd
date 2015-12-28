@@ -16,6 +16,7 @@
 
 #include "scsicmd.h"
 #include "main.h"
+#include "parse_mode_sense.h"
 #include <stdio.h>
 #include <memory.h>
 #include <errno.h>
@@ -25,12 +26,6 @@
 #include <fcntl.h>
 #include <scsi/sg.h>
 #include <inttypes.h>
-
-static inline uint16_t get_uint16(unsigned char *buf, int start)
-{
-	return (uint16_t)buf[start] << 8 |
-		   (uint16_t)buf[start+1];
-}
 
 void do_command(int fd)
 {
@@ -58,4 +53,42 @@ void do_command(int fd)
 
 	printf("Read %u bytes\n", buf_len);
 	response_dump(buf, buf_len);
+
+	if (buf_len < MODE_SENSE_10_MIN_LEN) {
+		printf("Returned data is too short, expected a minimum of %u bytes and got only %u\n", MODE_SENSE_10_MIN_LEN, buf_len);
+		return;
+	}
+
+	printf("Mode data len: %u\n", mode_sense_10_data_len(buf));
+	printf("Medium Type: %u\n", mode_sense_10_medium_type(buf));
+	printf("Device specific param: %u\n", mode_sense_10_device_specific_param(buf));
+	printf("Long LBA: %s\n", mode_sense_10_long_lba(buf) ? "yes" : "no");
+	printf("Block Descriptor length: %u\n", mode_sense_10_block_descriptor_length(buf));
+
+	if (buf_len < MODE_SENSE_10_MIN_LEN + mode_sense_10_block_descriptor_length(buf))
+	{
+		printf("Not enough data for the block descriptor length\n");
+		return;
+	}
+
+	if (mode_sense_10_long_lba(buf)) {
+		printf("Don't know how to parse the block descriptor for a long lba yet\n");
+	} else {
+		uint8_t *bdb = mode_sense_10_block_descriptor_data(buf);
+
+		putchar('\n');
+		printf("Density code: %u\n", block_descriptor_density_code(bdb));
+		printf("Num blocks: %u\n", block_descriptor_num_blocks(bdb));
+		printf("Block length: %u\n", block_descriptor_block_length(bdb));
+	}
+
+	if (buf_len < MODE_SENSE_10_MIN_LEN + mode_sense_10_block_descriptor_length(buf) + mode_sense_10_data_len(buf))
+	{
+		printf("Not enough data for the mode data length\n");
+		return;
+	}
+
+	putchar('\n');
+	//uint8_t *mode_data = mode_sense_10_mode_data(buf);
+
 } 
