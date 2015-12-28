@@ -15,29 +15,10 @@
  */
 
 #include "scsicmd.h"
+#include "scsicmd_utils.h"
 
 #include <stdio.h>
 #include <string.h>
-
-static inline void get_uint32(unsigned char *buf, int start, uint32_t *val)
-{
-	*val = (uint32_t)buf[start] << 24 |
-		   (uint32_t)buf[start+1] << 16 |
-		   (uint32_t)buf[start+2] << 8 |
-		   (uint32_t)buf[start+3];
-}
-
-static inline void get_uint64(unsigned char *buf, int start, uint64_t *val)
-{
-	*val = (uint64_t)buf[start] << 56 |
-		   (uint64_t)buf[start+1] << 48 |
-		   (uint64_t)buf[start+2] << 40 |
-		   (uint64_t)buf[start+3] << 32 |
-		   (uint64_t)buf[start+4] << 24 |
-		   (uint64_t)buf[start+5] << 16 |
-		   (uint64_t)buf[start+6] << 8 |
-		   (uint64_t)buf[start+7];
-}
 
 bool parse_read_capacity_10(unsigned char *buf, unsigned buf_len, uint32_t *max_lba, uint32_t *block_size)
 {

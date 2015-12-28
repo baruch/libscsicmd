@@ -15,6 +15,8 @@
  */
 
 #include "scsicmd.h"
+#include "scsicmd_utils.h"
+
 #include "main.h"
 #include <stdio.h>
 #include <memory.h>
@@ -25,12 +27,6 @@
 #include <fcntl.h>
 #include <scsi/sg.h>
 #include <inttypes.h>
-
-static inline uint16_t get_uint16(unsigned char *buf, int start)
-{
-	return (uint16_t)buf[start] << 8 |
-		   (uint16_t)buf[start+1];
-}
 
 static void dump_page(int fd, uint8_t page, uint8_t subpage)
 {
