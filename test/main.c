@@ -29,11 +29,14 @@
 
 static unsigned char sense[128];
 
+int debug = 1;
+
 bool submit_cmd(int fd, unsigned char *cdb, unsigned cdb_len, unsigned char *buf, unsigned buf_len, int dxfer_dir)
 {
 	sg_io_hdr_t hdr;
 
-	cdb_dump(cdb, cdb_len);
+	if (debug)
+		cdb_dump(cdb, cdb_len);
 
 	memset(&hdr, 0, sizeof(hdr));
 
@@ -49,8 +52,6 @@ bool submit_cmd(int fd, unsigned char *cdb, unsigned cdb_len, unsigned char *buf
 	hdr.flags = SG_FLAG_LUN_INHIBIT;
 	hdr.pack_id = 0;
 	hdr.usr_ptr = 0;
-
-	printf("sbp: %p\n", hdr.sbp);
 
 	ssize_t ret = write(fd, &hdr, sizeof(hdr));
 	return ret == sizeof(hdr);
@@ -68,19 +69,23 @@ bool read_response_buf(int fd, unsigned char **sensep, unsigned *sense_len, unsi
 		return false;
 	}
 
-	printf("status: %d\n", hdr.status);
-	printf("masked status: %d\n", hdr.masked_status);
-	printf("driver status: %d\n", hdr.driver_status);
-	printf("msg status: %d\n", hdr.msg_status);
-	printf("host status: %d\n", hdr.host_status);
-	printf("sense len: %d\n", hdr.sb_len_wr);
+	if (debug) {
+		printf("status: %d\n", hdr.status);
+		printf("masked status: %d\n", hdr.masked_status);
+		printf("driver status: %d\n", hdr.driver_status);
+		printf("msg status: %d\n", hdr.msg_status);
+		printf("host status: %d\n", hdr.host_status);
+		printf("sense len: %d\n", hdr.sb_len_wr);
+	}
 
 	if (hdr.sb_len_wr) {
 		*sensep = sense;
 		*sense_len = hdr.sb_len_wr;
 
-		printf("sense data:\n");
-                sense_dump(sense, hdr.sb_len_wr);
+		if (debug) {
+			printf("sense data:\n");
+			sense_dump(sense, hdr.sb_len_wr);
+		}
 	}
 	if (buf_read)
 		*buf_read = hdr.dxfer_len - hdr.resid;
