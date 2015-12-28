@@ -16,6 +16,7 @@
 
 #include "scsicmd.h"
 #include "main.h"
+#include "sense_dump.h"
 #include "parse_mode_sense.h"
 #include <stdio.h>
 #include <memory.h>
