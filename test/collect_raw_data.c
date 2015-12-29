@@ -58,8 +58,10 @@ static void emit_data_csv(uint8_t *cdb, uint8_t cdb_len, uint8_t *sense, uint8_t
 static void do_simple_inquiry(int fd)
 {
 	unsigned char cdb[32];
-	unsigned char buf[512] ;
+	unsigned char buf[512];
 	unsigned cdb_len = cdb_inquiry_simple(cdb, sizeof(buf));
+
+	memset(buf, 0, sizeof(buf));
 
 	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
 	if (!ret) {
@@ -78,8 +80,10 @@ static void do_simple_inquiry(int fd)
 static void dump_evpd(int fd, uint8_t evpd_page)
 {
 	unsigned char cdb[32];
-	unsigned char buf[512] ;
+	unsigned char buf[512];
 	unsigned cdb_len = cdb_inquiry(cdb, true, evpd_page, sizeof(buf));
+
+	memset(buf, 0, sizeof(buf));
 
 	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
 	if (!ret) {
@@ -98,8 +102,10 @@ static void dump_evpd(int fd, uint8_t evpd_page)
 static void do_extended_inquiry(int fd)
 {
 	unsigned char cdb[32];
-	unsigned char buf[512] ;
+	unsigned char buf[512];
 	unsigned cdb_len = cdb_inquiry(cdb, true, 0, sizeof(buf));
+
+	memset(buf, 0, sizeof(buf));
 
 	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
 	if (!ret) {
@@ -128,6 +134,8 @@ static void dump_log_sense(int fd, uint8_t page, uint8_t subpage)
 	unsigned char buf[16*1024];
 	unsigned cdb_len = cdb_log_sense(cdb, page, subpage, sizeof(buf));
 
+	memset(buf, 0, sizeof(buf));
+
 	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
 	if (!ret) {
 		fprintf(stderr, "Failed to submit command\n");
@@ -147,6 +155,8 @@ static void do_log_sense(int fd)
 	unsigned char cdb[32];
 	unsigned char buf[16*1024];
 	unsigned cdb_len = cdb_log_sense(cdb, 0, 0, sizeof(buf));
+
+	memset(buf, 0, sizeof(buf));
 
 	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
 	if (!ret) {
@@ -183,6 +193,8 @@ static void do_log_sense(int fd)
 	}
 
 	cdb_len = cdb_log_sense(cdb, 0, 0xff, sizeof(buf));
+
+	memset(buf, 0, sizeof(buf));
 
 	ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
 	if (!ret) {
@@ -312,6 +324,8 @@ static void dump_rcv_diag_page(int fd, uint8_t page)
 	unsigned char buf[16*1024];
 	unsigned cdb_len = cdb_receive_diagnostics(cdb, true, page, sizeof(buf));
 
+	memset(buf, 0, sizeof(buf));
+
 	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
 	if (!ret) {
 		fprintf(stderr, "Failed to submit command\n");
@@ -331,6 +345,8 @@ static void do_receive_diagnostic(int fd)
 	unsigned char cdb[32];
 	unsigned char buf[16*1024];
 	unsigned cdb_len = cdb_receive_diagnostics(cdb, true, 0, sizeof(buf));
+
+	memset(buf, 0, sizeof(buf));
 
 	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
 	if (!ret) {
@@ -373,6 +389,8 @@ static void do_read_capacity_10(int fd)
 	unsigned char buf[8];
 	unsigned cdb_len = cdb_read_capacity_10(cdb);
 
+	memset(buf, 0, sizeof(buf));
+
 	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
 	if (!ret) {
 		fprintf(stderr, "Failed to submit command\n");
@@ -392,6 +410,8 @@ static void do_read_capacity_16(int fd)
 	unsigned char cdb[32];
 	unsigned char buf[512];
 	unsigned cdb_len = cdb_read_capacity_16(cdb, sizeof(buf));
+
+	memset(buf, 0, sizeof(buf));
 
 	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
 	if (!ret) {
@@ -418,6 +438,8 @@ static void do_read_defect_data_10(int fd, bool plist, bool glist, uint8_t forma
 	unsigned char cdb[32];
 	unsigned char buf[512];
 	unsigned cdb_len = cdb_read_defect_data_10(cdb, plist, glist, format, count_only ? 8 : sizeof(buf));
+
+	memset(buf, 0, sizeof(buf));
 
 	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
 	if (!ret) {
@@ -446,6 +468,8 @@ static void do_read_defect_data_12(int fd, bool plist, bool glist, uint8_t forma
 	unsigned char cdb[32];
 	unsigned char buf[512];
 	unsigned cdb_len = cdb_read_defect_data_12(cdb, plist, glist, format, count_only ? 8 : sizeof(buf));
+
+	memset(buf, 0, sizeof(buf));
 
 	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
 	if (!ret) {
