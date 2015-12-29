@@ -24,6 +24,9 @@ target_link_libraries(scsi_inquiry testlib scsicmd)
 add_executable(scsi_log_sense scsi_log_sense.c)
 target_link_libraries(scsi_log_sense testlib scsicmd)
 
+add_executable(parse_scsi_log_sense parse_scsi_log_sense.c)
+target_link_libraries(parse_scsi_log_sense testlib scsicmd)
+
 add_executable(scsi_mode_sense scsi_mode_sense.c)
 target_link_libraries(scsi_mode_sense testlib scsicmd)
 
