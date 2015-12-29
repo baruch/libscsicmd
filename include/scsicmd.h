@@ -148,8 +148,12 @@ bool parse_inquiry(unsigned char *buf, unsigned buf_len, int *device_type, scsi_
                    scsi_model_t model, scsi_fw_revision_t rev, scsi_serial_t serial);
 
 /* read capacity */
+
+// READ CAPACITY 10 expects a buffer of 8 bytes
 int cdb_read_capacity_10(unsigned char *cdb);
 bool parse_read_capacity_10(unsigned char *buf, unsigned buf_len, uint32_t *max_lba, uint32_t *block_size);
+
+// READ CAPACITY 16 allows to set the receive buffer size but it should be at least 32 bytes
 int cdb_read_capacity_16(unsigned char *cdb, uint32_t alloc_len);
 bool parse_read_capacity_16(unsigned char *buf, unsigned buf_len, uint64_t *max_lba, uint32_t *block_size, bool *prot_enable,
 		unsigned *p_type, unsigned *p_i_exponent, unsigned *logical_blocks_per_physical_block_exponent,
