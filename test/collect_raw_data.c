@@ -413,6 +413,73 @@ static void do_read_capacity(int fd)
 	do_read_capacity_16(fd);
 }
 
+static void do_read_defect_data_10(int fd, bool plist, bool glist, uint8_t format, bool count_only)
+{
+	unsigned char cdb[32];
+	unsigned char buf[512];
+	unsigned cdb_len = cdb_read_defect_data_10(cdb, plist, glist, format, count_only ? 8 : sizeof(buf));
+
+	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
+	if (!ret) {
+		fprintf(stderr, "Failed to submit command\n");
+		return;
+	}
+
+	unsigned char *sense = NULL;
+	unsigned sense_len = 0;
+	unsigned buf_len = 0;
+	ret = read_response_buf(fd, &sense, &sense_len, &buf_len);
+
+	emit_data_csv(cdb, cdb_len, sense, sense_len, buf, buf_len);
+}
+
+static void do_read_defect_data_10_all(int fd, uint8_t format)
+{
+	do_read_defect_data_10(fd, true, false, format, true);
+	do_read_defect_data_10(fd, true, false, format, false);
+	do_read_defect_data_10(fd, false, true, format, true);
+	do_read_defect_data_10(fd, false, true, format, false);
+}
+
+static void do_read_defect_data_12(int fd, bool plist, bool glist, uint8_t format, bool count_only)
+{
+	unsigned char cdb[32];
+	unsigned char buf[512];
+	unsigned cdb_len = cdb_read_defect_data_12(cdb, plist, glist, format, count_only ? 8 : sizeof(buf));
+
+	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
+	if (!ret) {
+		fprintf(stderr, "Failed to submit command\n");
+		return;
+	}
+
+	unsigned char *sense = NULL;
+	unsigned sense_len = 0;
+	unsigned buf_len = 0;
+	ret = read_response_buf(fd, &sense, &sense_len, &buf_len);
+
+	emit_data_csv(cdb, cdb_len, sense, sense_len, buf, buf_len);
+}
+
+static void do_read_defect_data_12_all(int fd, uint8_t format)
+{
+	do_read_defect_data_12(fd, true, false, format, true);
+	do_read_defect_data_12(fd, true, false, format, false);
+	do_read_defect_data_12(fd, false, true, format, true);
+	do_read_defect_data_12(fd, false, true, format, false);
+}
+
+static void do_read_defect_data(int fd)
+{
+	uint8_t format;
+
+	for (format = 0; format < 8; format++)
+		do_read_defect_data_10_all(fd, format);
+
+	for (format = 0; format < 8; format++)
+		do_read_defect_data_12_all(fd, format);
+}
+
 void do_command(int fd)
 {
 	debug = 0;
@@ -423,4 +490,5 @@ void do_command(int fd)
 	do_log_sense(fd);
 	do_mode_sense(fd);
 	do_receive_diagnostic(fd);
+	do_read_defect_data(fd);
 }

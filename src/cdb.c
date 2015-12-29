@@ -189,3 +189,27 @@ int cdb_mode_sense_10(unsigned char *cdb, bool long_lba_accepted, bool disable_b
 	cdb[9] = 0;
 	return LEN;
 }
+
+int cdb_read_defect_data_10(unsigned char *cdb, bool plist, bool glist, address_desc_format_e format, uint16_t alloc_len)
+{
+	const int LEN = 10;
+	cdb[0] = 0x37;
+	cdb[1] = 0;
+	cdb[2] = (plist ? 0x10 : 0) | (glist ? 0x08 : 0) | format;
+	cdb[3] = cdb[4] = cdb[5] = cdb[6] = 0;
+	set_uint16(cdb, 7, alloc_len);
+	cdb[9] = 0;
+	return LEN;
+}
+
+int cdb_read_defect_data_12(unsigned char *cdb, bool plist, bool glist, address_desc_format_e format, uint32_t alloc_len)
+{
+	const int LEN = 12;
+	cdb[0] = 0xB7;
+	cdb[1] = (plist ? 0x10 : 0) | (glist ? 0x08 : 0) | format;
+	cdb[2] = cdb[3] = cdb[4] = cdb[5] = 0;
+	set_uint32(cdb, 6, alloc_len);
+	cdb[10] = 0;
+	cdb[11] = 0;
+	return LEN;
+}

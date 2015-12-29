@@ -197,4 +197,19 @@ typedef enum {
 } self_test_code_e;
 int cdb_send_diagnostics(unsigned char *cdb, self_test_code_e self_test, uint16_t param_len);
 
+/* read defect data */
+typedef enum {
+	ADDRESS_FORMAT_SHORT = 0,
+	ADDRESS_FORMAT_RESERVED_1 = 1,
+	ADDRESS_FORMAT_RESERVED_2 = 2,
+	ADDRESS_FORMAT_LONG = 3,
+	ADDRESS_FORMAT_INDEX_OFFSET = 4,
+	ADDRESS_FORMAT_PHYSICAL = 5,
+	ADDRESS_FORMAT_VENDOR = 6,
+	ADDRESS_FORMAT_RESERVED_3 = 7,
+} address_desc_format_e;
+
+int cdb_read_defect_data_10(unsigned char *cdb, bool plist, bool glist, address_desc_format_e format, uint16_t alloc_len);
+int cdb_read_defect_data_12(unsigned char *cdb, bool plist, bool glist, address_desc_format_e format, uint32_t alloc_len);
+
 #endif
