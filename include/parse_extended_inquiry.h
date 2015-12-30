@@ -46,10 +46,30 @@ static inline uint8_t *evpd_page_data(uint8_t *data)
 	return data + EVPD_MIN_LEN;
 }
 
-/* This should be called with the body of the EVPD data and not the full (i.e. remove the header) */
+static inline bool evpd_is_ascii_page(uint8_t page_code)
+{
+	return 0x01 <= page_code && page_code <= 0x7F;
+}
+
+/* This should be called with the body of the EVPD data and not the full (i.e. with the output of evpd_page_data()) */
 static inline uint16_t evpd_ascii_len(uint8_t *evpd_body)
 {
 	return (evpd_body[0] << 8) | evpd_body[1];
+}
+
+static inline uint8_t *evpd_ascii_data(uint8_t *evpd_body)
+{
+	return evpd_body + 2;
+}
+
+static inline uint8_t *evpd_ascii_post_data(uint8_t *evpd_body)
+{
+	return evpd_body + 2 + evpd_ascii_len(evpd_body);
+}
+
+static inline unsigned evpd_ascii_post_data_len(uint8_t *evpd_body, unsigned full_data_len)
+{
+	return full_data_len - EVPD_MIN_LEN - 2 - evpd_ascii_len(evpd_body);
 }
 
 #endif

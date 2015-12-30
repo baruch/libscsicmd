@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 #include "parse_log_sense.h"
+#include "parse_extended_inquiry.h"
 #include "scsicmd.h"
 #include "sense_dump.h"
 
@@ -183,6 +184,65 @@ static int parse_read_cap_16(unsigned char *data, unsigned data_len)
 	return 0;
 }
 
+static int parse_extended_inquiry_data(uint8_t *data, unsigned data_len)
+{
+	if (data_len < EVPD_MIN_LEN) {
+		printf("Not enough data for EVPD header\n");
+		unparsed_data(data, data_len);
+		return 1;
+	}
+
+	printf("Peripheral Qualifier: %d\n", evpd_peripheral_qualifier(data));
+	printf("Peripheral Device Type: %d\n", evpd_peripheral_device_type(data));
+	printf("EVPD page code: 0x%02X\n", evpd_page_code(data));
+	printf("EVPD data len: %u\n", evpd_page_len(data));
+
+	uint8_t *page_data = evpd_page_data(data);
+
+	if (evpd_is_ascii_page(evpd_page_code(data))) {
+		printf("ASCII len: %u\n", evpd_ascii_len(page_data));
+		printf("ASCII string: '%*s'\n", evpd_ascii_len(page_data), evpd_ascii_data(page_data));
+		if (evpd_ascii_post_data_len(page_data, data_len) > 0)
+			unparsed_data(evpd_ascii_post_data(page_data), evpd_ascii_post_data_len(page_data, data_len));
+	} else {
+		unparsed_data(page_data, evpd_page_len(data));
+	}
+	return 0;
+}
+
+static int parse_simple_inquiry_data(uint8_t *data, unsigned data_len)
+{
+	int device_type;
+	scsi_vendor_t vendor;
+	scsi_model_t model;
+	scsi_fw_revision_t rev;
+	scsi_serial_t serial;
+	bool parsed = parse_inquiry(data, data_len, &device_type, vendor, model, rev, serial);
+
+	if (!parsed) {
+		unparsed_data(data, data_len);
+		return 1;
+	}
+
+	printf("Device Type: %d\n", device_type);
+	printf("Vendor: %s\n", vendor);
+	printf("Model: %s\n", model);
+	printf("FW Revision: %s\n", rev);
+	printf("Serial: %s\n", serial);
+	return 0;
+}
+
+static int parse_inquiry_data(uint8_t *cdb, unsigned cdb_len, uint8_t *data, unsigned data_len)
+{
+	if (cdb_len < 6)
+		return 1;
+
+	if (cdb[1] & 1)
+		return parse_extended_inquiry_data(data, data_len);
+	else
+		return parse_simple_inquiry_data(data, data_len);
+}
+
 int main(int argc, char **argv)
 {
 	unsigned char cdb[32];
@@ -222,6 +282,7 @@ int main(int argc, char **argv)
 		case 0x4D: return parse_log_sense(data, data_len);
 		case 0x25: return parse_read_cap_10(data, data_len);
 		case 0x9E: return parse_read_cap_16(data, data_len);
+		case 0x12: return parse_inquiry_data(cdb, cdb_len, data, data_len);
 		default:
 				   printf("Unsupported CDB opcode %02X\n", cdb[0]);
 				   unparsed_data(data, data_len);
