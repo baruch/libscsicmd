@@ -95,7 +95,7 @@ static int parse_log_sense(unsigned char *data, unsigned data_len)
 		printf("Insufficient data in log sense to begin parsing\n");
 		return 1;
 	}
-	printf("Log Sense Page Code: 0x02%x\n", log_sense_page_code(data));
+	printf("Log Sense Page Code: 0x%02x\n", log_sense_page_code(data));
 	printf("Log Sense Subpage: 0x%02x\n", log_sense_subpage_code(data));
 	printf("Log Sense Subpage format: %s\n", yes_no(log_sense_subpage_format(data)));
 	printf("Log Sense Data Saved: %s\n", yes_no(log_sense_data_saved(data)));
