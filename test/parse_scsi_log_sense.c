@@ -44,6 +44,11 @@ static int parse_hex(unsigned char *buf, unsigned buf_size, char *str)
 	return len;
 }
 
+static inline const char *yes_no(bool val)
+{
+	return val ? "yes" : "no";
+}
+
 static int parse_log_sense(unsigned char *data, unsigned data_len)
 {
 	printf("Parsing\n");
@@ -51,7 +56,20 @@ static int parse_log_sense(unsigned char *data, unsigned data_len)
 		printf("Insufficient data in log sense to begin parsing\n");
 		return 1;
 	}
-	printf("Log Sense Page Code: 0x%x (%u)\n", log_sense_page_code(data), log_sense_page_code(data));
+	printf("Log Sense Page Code: 0x02%x\n", log_sense_page_code(data));
+	printf("Log Sense Subpage: 0x%02x\n", log_sense_subpage_code(data));
+	printf("Log Sense Subpage format: %s\n", yes_no(log_sense_subpage_format(data)));
+	printf("Log Sense Data Saved: %s\n", yes_no(log_sense_data_saved(data)));
+	printf("Log Sense Data Length: %u\n", log_sense_data_len(data));
+
+	uint8_t *param;
+	for_all_log_sense_params(data, data_len, param) {
+		putchar('\n');
+		printf("Log Sense Param Code: 0x%04x\n", log_sense_param_code(param));
+		printf("Log Sense Param Len: %u\n", log_sense_param_len(param));
+		response_dump(log_sense_param_data(param), log_sense_param_len(param));
+	}
+
 	return 0;
 }
 
