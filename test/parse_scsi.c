@@ -154,6 +154,35 @@ static int parse_read_cap_10(unsigned char *data, unsigned data_len)
 	return 0;
 }
 
+static int parse_read_cap_16(unsigned char *data, unsigned data_len)
+{
+	uint64_t max_lba;
+	uint32_t block_size;
+	bool prot_enable, thin_provisioning_enabled, thin_provisioning_zero;
+	unsigned p_type, p_i_exponent, logical_blocks_per_physical_block_exponent, lowest_aligned_lba;
+
+	bool parsed = parse_read_capacity_16(data, data_len, &max_lba, &block_size, &prot_enable,
+		&p_type, &p_i_exponent, &logical_blocks_per_physical_block_exponent,
+		&thin_provisioning_enabled, &thin_provisioning_zero, &lowest_aligned_lba);
+
+	if (!parsed) {
+		unparsed_data(data, data_len);
+		return 1;
+	}
+
+	printf("Max LBA: %lu\n", max_lba);
+	printf("Block Size: %u\n", block_size);
+	printf("Protection enabled: %s\n", yes_no(prot_enable));
+	printf("Thin Provisioning enabled: %s\n", yes_no(thin_provisioning_enabled));
+	printf("Thin Provisioning zero: %s\n", yes_no(thin_provisioning_zero));
+	printf("P Type: %u\n", p_type);
+	printf("Pi Exponent: %u\n", p_i_exponent);
+	printf("Logical blocks per physical block exponent: %u\n", logical_blocks_per_physical_block_exponent);
+	printf("Lowest aligned LBA: %u\n", lowest_aligned_lba);
+
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	unsigned char cdb[32];
@@ -192,6 +221,7 @@ int main(int argc, char **argv)
 	switch (cdb[0]) {
 		case 0x4D: return parse_log_sense(data, data_len);
 		case 0x25: return parse_read_cap_10(data, data_len);
+		case 0x9E: return parse_read_cap_16(data, data_len);
 		default:
 				   printf("Unsupported CDB opcode %02X\n", cdb[0]);
 				   unparsed_data(data, data_len);
