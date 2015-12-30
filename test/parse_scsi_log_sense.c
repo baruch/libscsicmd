@@ -16,6 +16,15 @@ static unsigned char char2val(unsigned char ch)
 		return 0;
 }
 
+static void print_hex(uint8_t *buf, unsigned buf_len)
+{
+	unsigned i;
+	for (i = 0; i < buf_len; i++) {
+		printf("%02x ", buf[i]);
+	}
+	printf("\n");
+}
+
 static int parse_hex(unsigned char *buf, unsigned buf_size, char *str)
 {
 	unsigned char ch;
@@ -49,6 +58,35 @@ static inline const char *yes_no(bool val)
 	return val ? "yes" : "no";
 }
 
+static void unparsed_data(uint8_t *buf, unsigned buf_len)
+{
+	printf("Unparsed data: ");
+	print_hex(buf, buf_len);
+}
+
+static void parse_log_sense_param_informational_exceptions(uint16_t param_code, uint8_t *param, uint8_t param_len)
+{
+	switch (param_code) {
+		case 0:
+			printf("Information Exceptions ASC: %02X\n", param[0]);
+			printf("Information Exceptions ASCQ: %02X\n", param[1]);
+			printf("Temperature: %u\n", param[2]);
+			if (param_len > 3)
+				unparsed_data(param+3, param_len-3);
+			break;
+		default:
+			unparsed_data(param, param_len);
+	}
+}
+
+static void parse_log_sense_param(uint8_t page, uint8_t subpage, uint16_t param_code, uint8_t *param, uint8_t param_len)
+{
+	switch (page) {
+		case 0x2F: parse_log_sense_param_informational_exceptions(param_code, param, param_len); break;
+		default: unparsed_data(param, param_len); break;
+	}
+}
+
 static int parse_log_sense(unsigned char *data, unsigned data_len)
 {
 	printf("Parsing\n");
@@ -67,7 +105,7 @@ static int parse_log_sense(unsigned char *data, unsigned data_len)
 		putchar('\n');
 		printf("Log Sense Param Code: 0x%04x\n", log_sense_param_code(param));
 		printf("Log Sense Param Len: %u\n", log_sense_param_len(param));
-		response_dump(log_sense_param_data(param), log_sense_param_len(param));
+		parse_log_sense_param(log_sense_page_code(data), log_sense_subpage_code(data), log_sense_param_code(param), log_sense_param_data(param), log_sense_param_len(param));
 	}
 
 	return 0;
