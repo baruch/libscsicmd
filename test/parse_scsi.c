@@ -4,6 +4,7 @@
 
 #include "parse_log_sense.h"
 #include "scsicmd.h"
+#include "sense_dump.h"
 
 static unsigned char char2val(unsigned char ch)
 {
@@ -183,7 +184,8 @@ int main(int argc, char **argv)
 	}
 
 	if (sense_len > 0) {
-		printf("Sense data indicates an error, not parsing\n");
+		printf("Sense data indicates an error, not parsing data\n");
+		sense_dump(sense, sense_len);
 		return 1;
 	}
 
