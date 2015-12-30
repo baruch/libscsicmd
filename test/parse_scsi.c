@@ -87,6 +87,7 @@ static void parse_log_sense_param(uint8_t page, uint8_t subpage, uint16_t param_
 	(void)subpage;
 	switch (page) {
 		case 0x2F: parse_log_sense_param_informational_exceptions(param_code, param, param_len); break;
+		/* TODO: parse more LOG SENSE pages */
 		default: unparsed_data(param, param_len); break;
 	}
 }
@@ -205,6 +206,7 @@ static int parse_extended_inquiry_data(uint8_t *data, unsigned data_len)
 		if (evpd_ascii_post_data_len(page_data, data_len) > 0)
 			unparsed_data(evpd_ascii_post_data(page_data), evpd_ascii_post_data_len(page_data, data_len));
 	} else {
+		/* TODO: parse more of the extended inquiry pages */
 		unparsed_data(page_data, evpd_page_len(data));
 	}
 	return 0;
@@ -283,6 +285,9 @@ int main(int argc, char **argv)
 		case 0x25: return parse_read_cap_10(data, data_len);
 		case 0x9E: return parse_read_cap_16(data, data_len);
 		case 0x12: return parse_inquiry_data(cdb, cdb_len, data, data_len);
+				   /* TODO: parse MODE SENSE */
+				   /* TODO: parse RECEIVE DIAGNOSTICS */
+				   /* TODO: parse READ DEFECT DATA */
 		default:
 				   printf("Unsupported CDB opcode %02X\n", cdb[0]);
 				   unparsed_data(data, data_len);
