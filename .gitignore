@@ -15,6 +15,7 @@ scsi_inquiry
 scsi_log_sense
 scsi_mode_sense
 scsi_receive_diagnostics
+parse_scsi
 collect_raw_data
 test/libtestlib.a
 
