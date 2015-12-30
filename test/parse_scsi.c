@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 #include "parse_log_sense.h"
+#include "scsicmd.h"
 
 static unsigned char char2val(unsigned char ch)
 {
@@ -133,6 +134,25 @@ static int parse_log_sense(unsigned char *data, unsigned data_len)
 	return 0;
 }
 
+static int parse_read_cap_10(unsigned char *data, unsigned data_len)
+{
+	uint32_t max_lba;
+	uint32_t block_size;
+	bool parsed = parse_read_capacity_10(data, data_len, &max_lba, &block_size);
+
+	if (!parsed) {
+		unparsed_data(data, data_len);
+		return 1;
+	}
+
+	printf("Max LBA: %u\n", max_lba);
+	printf("Block Size: %u\n", block_size);
+
+	if (data_len > 8)
+		unparsed_data(data+8, data_len-8);
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	unsigned char cdb[32];
@@ -162,15 +182,18 @@ int main(int argc, char **argv)
 		return 1;
 	}
 
-	if (cdb[0] != 0x4D) {
-		printf("Mismatch in CDB opcode\n");
-		return 1;
-	}
-
 	if (sense_len > 0) {
-		printf("Sense data indicates an error\n");
+		printf("Sense data indicates an error, not parsing\n");
 		return 1;
 	}
 
-	return parse_log_sense(data, data_len);
+	switch (cdb[0]) {
+		case 0x4D: return parse_log_sense(data, data_len);
+		case 0x25: return parse_read_cap_10(data, data_len);
+		default:
+				   printf("Unsupported CDB opcode %02X\n", cdb[0]);
+				   unparsed_data(data, data_len);
+	}
+
+	return 1;
 }
