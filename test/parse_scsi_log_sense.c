@@ -81,6 +81,7 @@ static void parse_log_sense_param_informational_exceptions(uint16_t param_code, 
 
 static void parse_log_sense_param(uint8_t page, uint8_t subpage, uint16_t param_code, uint8_t *param, uint8_t param_len)
 {
+	(void)subpage;
 	switch (page) {
 		case 0x2F: parse_log_sense_param_informational_exceptions(param_code, param, param_len); break;
 		default: unparsed_data(param, param_len); break;
