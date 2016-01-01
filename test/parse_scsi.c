@@ -5,6 +5,7 @@
 #include "parse_log_sense.h"
 #include "parse_mode_sense.h"
 #include "parse_extended_inquiry.h"
+#include "parse_read_defect_data.h"
 #include "scsicmd.h"
 #include "sense_dump.h"
 
@@ -359,6 +360,48 @@ static int parse_mode_sense_6(uint8_t *data, unsigned data_len)
 	return 0;
 }
 
+static int parse_read_defect_data_10(uint8_t *data, unsigned data_len)
+{
+	if (!read_defect_data_10_hdr_is_valid(data, data_len)) {
+		printf("Header is not valid\n");
+		unparsed_data(data, data_len, data, data_len);
+		return 1;
+}
+
+	printf("Plist: %s\n", yes_no(read_defect_data_10_is_plist_valid(data)));
+	printf("Glist: %s\n", yes_no(read_defect_data_10_is_glist_valid(data)));
+	printf("Format: %u\n", read_defect_data_10_list_format(data));
+	printf("Len: %u\n", read_defect_data_10_len(data));
+
+	if (!read_defect_data_10_is_valid(data, data_len))
+		return 0;
+
+	if (data_len > 4)
+		unparsed_data(read_defect_data_10_data(data), read_defect_data_10_len(data), data, data_len);
+	return 0;
+}
+
+static int parse_read_defect_data_12(uint8_t *data, unsigned data_len)
+{
+	if (!read_defect_data_12_hdr_is_valid(data, data_len)) {
+		printf("Header is not valid\n");
+		unparsed_data(data, data_len, data, data_len);
+		return 1;
+	}
+
+	printf("Plist: %s\n", yes_no(read_defect_data_12_is_plist_valid(data)));
+	printf("Glist: %s\n", yes_no(read_defect_data_12_is_glist_valid(data)));
+	printf("Format: %u\n", read_defect_data_12_list_format(data));
+	printf("Len: %u\n", read_defect_data_12_len(data));
+
+	if (!read_defect_data_12_is_valid(data, data_len))
+		return 0;
+
+	if (data_len > 8)
+		unparsed_data(read_defect_data_12_data(data), read_defect_data_12_len(data), data, data_len);
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	unsigned char cdb[32];
@@ -402,7 +445,8 @@ int main(int argc, char **argv)
 		case 0x5A: return parse_mode_sense_10(data, data_len);
 		case 0x1A: return parse_mode_sense_6(data, data_len);
 				   /* TODO: parse RECEIVE DIAGNOSTICS */
-				   /* TODO: parse READ DEFECT DATA */
+		case 0x37: return parse_read_defect_data_10(data, data_len);
+		case 0xB7: return parse_read_defect_data_12(data, data_len);
 		default:
 				   printf("Unsupported CDB opcode %02X\n", cdb[0]);
 				   unparsed_data(data, data_len, data, data_len);
