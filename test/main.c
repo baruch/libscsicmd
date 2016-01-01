@@ -69,14 +69,12 @@ bool read_response_buf(int fd, unsigned char **sensep, unsigned *sense_len, unsi
 		return false;
 	}
 
-	if (debug) {
-		printf("status: %d\n", hdr.status);
-		printf("masked status: %d\n", hdr.masked_status);
-		printf("driver status: %d\n", hdr.driver_status);
-		printf("msg status: %d\n", hdr.msg_status);
-		printf("host status: %d\n", hdr.host_status);
-		printf("sense len: %d\n", hdr.sb_len_wr);
-	}
+	printf("status: %d\n", hdr.status);
+	printf("masked status: %d\n", hdr.masked_status);
+	printf("driver status: %d\n", hdr.driver_status);
+	printf("msg status: %d\n", hdr.msg_status);
+	printf("host status: %d\n", hdr.host_status);
+	printf("sense len: %d\n", hdr.sb_len_wr);
 
 	if (hdr.sb_len_wr) {
 		*sensep = sense;
