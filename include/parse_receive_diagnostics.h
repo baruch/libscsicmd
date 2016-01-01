@@ -26,9 +26,28 @@ static inline uint8_t recv_diag_get_page_code(uint8_t *data)
 	return data[0];
 }
 
+static inline uint8_t recv_diag_get_page_code_specific(uint8_t *data)
+{
+	return data[1];
+}
+
 static inline uint16_t recv_diag_get_len(uint8_t *data)
 {
 	return (data[2] << 8) | data[3];
+}
+
+static inline uint8_t *recv_diag_data(uint8_t *data)
+{
+	return data + RECV_DIAG_MIN_LEN;
+}
+
+static inline bool recv_diag_is_valid(uint8_t *data, unsigned data_len)
+{
+	if (data_len < RECV_DIAG_MIN_LEN)
+		return false;
+	if ((unsigned)recv_diag_get_len(data) + RECV_DIAG_MIN_LEN > data_len)
+		return false;
+	return true;
 }
 
 #endif

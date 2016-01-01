@@ -6,6 +6,7 @@
 #include "parse_mode_sense.h"
 #include "parse_extended_inquiry.h"
 #include "parse_read_defect_data.h"
+#include "parse_receive_diagnostics.h"
 #include "scsicmd.h"
 #include "sense_dump.h"
 
@@ -444,6 +445,31 @@ static int parse_read_defect_data_12(uint8_t *data, unsigned data_len)
 	return 0;
 }
 
+static void parse_receive_diagnostic_results_pg_0(uint8_t *data, unsigned data_len)
+{
+	printf("Supported Receive Diagnostic Results pages:\n");
+	for (; data_len > 0; data_len--, data++)
+		printf("\t0x%02x\n", data[0]);
+}
+
+static int parse_receive_diagnostic_results(uint8_t *data, unsigned data_len)
+{
+	if (!recv_diag_is_valid(data, data_len)) {
+		printf("Data is not valid\n");
+		return 1;
+	}
+
+	printf("Page code: 0x%02X\n", recv_diag_get_page_code(data));
+	printf("Page code specific: 0x%02x\n", recv_diag_get_page_code_specific(data));
+	printf("Len: %u\n", recv_diag_get_len(data));
+
+	if (recv_diag_get_page_code(data) == 0)
+		parse_receive_diagnostic_results_pg_0(recv_diag_data(data), safe_len(data, data_len, recv_diag_data(data), recv_diag_get_len(data)));
+	else
+		unparsed_data(recv_diag_data(data), recv_diag_get_len(data), data, data_len); /* TODO: parse SES pages */
+	return 0;
+}
+
 int main(int argc, char **argv)
 {
 	unsigned char cdb[32];
@@ -486,7 +512,7 @@ int main(int argc, char **argv)
 		case 0x12: return parse_inquiry_data(cdb, cdb_len, data, data_len);
 		case 0x5A: return parse_mode_sense_10(data, data_len);
 		case 0x1A: return parse_mode_sense_6(data, data_len);
-				   /* TODO: parse RECEIVE DIAGNOSTICS */
+		case 0x1C: return parse_receive_diagnostic_results(data, data_len);
 		case 0x37: return parse_read_defect_data_10(data, data_len);
 		case 0xB7: return parse_read_defect_data_12(data, data_len);
 		default:
