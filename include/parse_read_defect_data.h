@@ -18,6 +18,10 @@
 #define LIBSCSICMD_READ_DEFECT_DATA_H
 
 #include "scsicmd_utils.h"
+#include <stdbool.h>
+#include <stdint.h>
+
+const char *read_defect_data_format_to_str(uint8_t fmt);
 
 /* READ DEFECT DATA 10 */
 

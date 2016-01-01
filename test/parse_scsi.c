@@ -370,7 +370,7 @@ static int parse_read_defect_data_10(uint8_t *data, unsigned data_len)
 
 	printf("Plist: %s\n", yes_no(read_defect_data_10_is_plist_valid(data)));
 	printf("Glist: %s\n", yes_no(read_defect_data_10_is_glist_valid(data)));
-	printf("Format: %u\n", read_defect_data_10_list_format(data));
+	printf("Format: %s\n", read_defect_data_format_to_str(read_defect_data_10_list_format(data)));
 	printf("Len: %u\n", read_defect_data_10_len(data));
 
 	if (!read_defect_data_10_is_valid(data, data_len))
@@ -391,7 +391,7 @@ static int parse_read_defect_data_12(uint8_t *data, unsigned data_len)
 
 	printf("Plist: %s\n", yes_no(read_defect_data_12_is_plist_valid(data)));
 	printf("Glist: %s\n", yes_no(read_defect_data_12_is_glist_valid(data)));
-	printf("Format: %u\n", read_defect_data_12_list_format(data));
+	printf("Format: %s\n", read_defect_data_format_to_str(read_defect_data_12_list_format(data)));
 	printf("Len: %u\n", read_defect_data_12_len(data));
 
 	if (!read_defect_data_12_is_valid(data, data_len))
