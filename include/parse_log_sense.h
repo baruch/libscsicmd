@@ -18,6 +18,8 @@
 #define LIBSCSICMD_LOG_SENSE_H
 
 #include "scsicmd_utils.h"
+#include <stdint.h>
+#include <stdbool.h>
 
 /* Log Sense Header decode */
 
@@ -53,6 +55,13 @@ static inline uint8_t *log_sense_data(uint8_t *data)
 	return data + LOG_SENSE_MIN_LEN;
 }
 
+static inline bool log_sense_valid(unsigned data_len)
+{
+	if (data_len < LOG_SENSE_MIN_LEN)
+		return false;
+	return true;
+}
+
 /* Log Sense Parameter decode */
 #define LOG_SENSE_MIN_PARAM_LEN 4
 
@@ -81,5 +90,7 @@ static inline uint8_t *log_sense_param_data(uint8_t *param)
 	for (param = log_sense_data(data); \
 		 (param - data) < data_len && (param + LOG_SENSE_MIN_PARAM_LEN - data) < data_len && (param + LOG_SENSE_MIN_PARAM_LEN + log_sense_param_len(param) - data) < data_len; \
 		 param = param + LOG_SENSE_MIN_PARAM_LEN + log_sense_param_len(param))
+
+bool log_sense_page_informational_exceptions(uint8_t *page, unsigned page_len, uint8_t *asc, uint8_t *ascq, uint8_t *temperature);
 
 #endif
