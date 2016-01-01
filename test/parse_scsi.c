@@ -283,6 +283,7 @@ static unsigned parse_mode_sense_data_page(uint8_t *data, unsigned data_len)
 	printf("Page Saveable: %s\n", yes_no(mode_sense_data_parameter_saveable(data)));
 
 	printf("Page len: %u\n", mode_sense_data_param_len(data));
+	/* TODO: Parse the mode sense data */
 	unparsed_data(mode_sense_data_param(data), mode_sense_data_param_len(data), data, data_len);
 	return mode_sense_data_page_len(data);
 }
