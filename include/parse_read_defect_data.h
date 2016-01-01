@@ -18,6 +18,7 @@
 #define LIBSCSICMD_READ_DEFECT_DATA_H
 
 #include "scsicmd_utils.h"
+#include "scsicmd.h"
 #include <stdbool.h>
 #include <stdint.h>
 
@@ -170,5 +171,17 @@ static inline uint32_t format_address_physical_sector(uint8_t *data)
 	return get_uint32(data, 4);
 }
 #define FORMAT_ADDRESS_PHYSICAL_ALL_TRACK 0xFFFFFFFF
+
+static inline unsigned read_defect_data_fmt_len(address_desc_format_e fmt)
+{
+	switch (fmt) {
+	case ADDRESS_FORMAT_SHORT: return FORMAT_ADDRESS_SHORT_LEN;
+	case ADDRESS_FORMAT_LONG: return FORMAT_ADDRESS_LONG_LEN;
+	case ADDRESS_FORMAT_INDEX_OFFSET: return FORMAT_ADDRESS_BYTE_FROM_INDEX_LEN;
+	case ADDRESS_FORMAT_PHYSICAL: return FORMAT_ADDRESS_PHYSICAL_LEN;
+	case ADDRESS_FORMAT_VENDOR: return 4;
+	default: return 0;
+	}
+}
 
 #endif

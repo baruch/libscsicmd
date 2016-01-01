@@ -360,6 +360,43 @@ static int parse_mode_sense_6(uint8_t *data, unsigned data_len)
 	return 0;
 }
 
+static void read_defect_data_format(address_desc_format_e fmt, uint8_t *data, unsigned len)
+{
+	const unsigned fmt_len = read_defect_data_fmt_len(fmt);
+	if (fmt_len == 0) {
+		printf("Unknown format to decode\n");
+		unparsed_data(data, len, data, len);
+		return;
+	}
+	for (; len > fmt_len; data += fmt_len, len -= fmt_len) {
+		switch (fmt) {
+			case ADDRESS_FORMAT_SHORT:
+				printf("\t%u\n", get_uint32(data, 0));
+				break;
+			case ADDRESS_FORMAT_LONG:
+				printf("\t%lu\n", get_uint64(data, 0));
+				break;
+			case ADDRESS_FORMAT_INDEX_OFFSET:
+				printf("\tC=%u H=%u B=%u\n",
+						format_address_byte_from_index_cylinder(data),
+						format_address_byte_from_index_head(data),
+						format_address_byte_from_index_bytes(data));
+				break;
+			case ADDRESS_FORMAT_PHYSICAL:
+				printf("\tC=%u H=%u S=%u\n",
+						format_address_physical_cylinder(data),
+						format_address_physical_head(data),
+						format_address_physical_sector(data));
+				break;
+			case ADDRESS_FORMAT_VENDOR:
+				printf("\t%08x\n", get_uint32(data, 0));
+				break;
+			default:
+				break;
+		}
+	}
+}
+
 static int parse_read_defect_data_10(uint8_t *data, unsigned data_len)
 {
 	if (!read_defect_data_10_hdr_is_valid(data, data_len)) {
@@ -376,8 +413,10 @@ static int parse_read_defect_data_10(uint8_t *data, unsigned data_len)
 	if (!read_defect_data_10_is_valid(data, data_len))
 		return 0;
 
-	if (data_len > 4)
-		unparsed_data(read_defect_data_10_data(data), read_defect_data_10_len(data), data, data_len);
+	if (data_len > 0) {
+		const unsigned len = safe_len(data, data_len, read_defect_data_10_data(data), read_defect_data_10_len(data));
+		read_defect_data_format(read_defect_data_10_list_format(data), read_defect_data_10_data(data), len);
+	}
 	return 0;
 }
 
@@ -397,8 +436,10 @@ static int parse_read_defect_data_12(uint8_t *data, unsigned data_len)
 	if (!read_defect_data_12_is_valid(data, data_len))
 		return 0;
 
-	if (data_len > 8)
-		unparsed_data(read_defect_data_12_data(data), read_defect_data_12_len(data), data, data_len);
+	if (data_len > 0) {
+		const unsigned len = safe_len(data, data_len, read_defect_data_10_data(data), read_defect_data_10_len(data));
+		read_defect_data_format(read_defect_data_12_list_format(data), read_defect_data_12_data(data), len);
+	}
 	return 0;
 }
 
