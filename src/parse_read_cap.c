@@ -26,9 +26,9 @@ bool parse_read_capacity_10(unsigned char *buf, unsigned buf_len, uint32_t *max_
 		return false;
 
 	if (max_lba)
-		get_uint32(buf, 0, max_lba);
+		*max_lba = get_uint32(buf, 0);
 	if (block_size)
-		get_uint32(buf, 4, block_size);
+		*block_size = get_uint32(buf, 4);
 	return true;
 }
 
@@ -40,9 +40,9 @@ bool parse_read_capacity_16(unsigned char *buf, unsigned buf_len, uint64_t *max_
 		return false;
 
 	if (max_lba)
-		get_uint64(buf, 0, max_lba);
+		*max_lba = get_uint64(buf, 0);
 	if (block_size)
-		get_uint32(buf, 8, block_size);
+		*block_size = get_uint32(buf, 8);
 	if (prot_enable)
 		*prot_enable = buf[12] & 1;
 	if (p_type)
