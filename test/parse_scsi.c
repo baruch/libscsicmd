@@ -3,6 +3,7 @@
 #include <stdbool.h>
 
 #include "parse_log_sense.h"
+#include "parse_mode_sense.h"
 #include "parse_extended_inquiry.h"
 #include "scsicmd.h"
 #include "sense_dump.h"
@@ -61,10 +62,20 @@ static inline const char *yes_no(bool val)
 	return val ? "yes" : "no";
 }
 
-static void unparsed_data(uint8_t *buf, unsigned buf_len)
+static unsigned safe_len(uint8_t *start, unsigned len, uint8_t *subbuf, unsigned subbuf_len)
+{
+	const unsigned start_offset = subbuf - start;
+
+	if (subbuf_len + start_offset > len)
+		return len - start_offset;
+	else
+		return subbuf_len;
+}
+
+static void unparsed_data(uint8_t *buf, unsigned buf_len, uint8_t *start, unsigned total_len)
 {
 	printf("Unparsed data: ");
-	print_hex(buf, buf_len);
+	print_hex(buf, safe_len(start, total_len, buf, buf_len));
 }
 
 static void parse_log_sense_param_informational_exceptions(uint16_t param_code, uint8_t *param, uint8_t param_len)
@@ -75,10 +86,10 @@ static void parse_log_sense_param_informational_exceptions(uint16_t param_code, 
 			printf("Information Exceptions ASCQ: %02X\n", param[1]);
 			printf("Temperature: %u\n", param[2]);
 			if (param_len > 3)
-				unparsed_data(param+3, param_len-3);
+				unparsed_data(param+3, param_len-3, param, param_len);
 			break;
 		default:
-			unparsed_data(param, param_len);
+			unparsed_data(param, param_len, param, param_len);
 	}
 }
 
@@ -88,7 +99,7 @@ static void parse_log_sense_param(uint8_t page, uint8_t subpage, uint16_t param_
 	switch (page) {
 		case 0x2F: parse_log_sense_param_informational_exceptions(param_code, param, param_len); break;
 		/* TODO: parse more LOG SENSE pages */
-		default: unparsed_data(param, param_len); break;
+		default: unparsed_data(param, param_len, param, param_len); break;
 	}
 }
 
@@ -144,7 +155,7 @@ static int parse_read_cap_10(unsigned char *data, unsigned data_len)
 	bool parsed = parse_read_capacity_10(data, data_len, &max_lba, &block_size);
 
 	if (!parsed) {
-		unparsed_data(data, data_len);
+		unparsed_data(data, data_len, data, data_len);
 		return 1;
 	}
 
@@ -152,7 +163,7 @@ static int parse_read_cap_10(unsigned char *data, unsigned data_len)
 	printf("Block Size: %u\n", block_size);
 
 	if (data_len > 8)
-		unparsed_data(data+8, data_len-8);
+		unparsed_data(data+8, data_len-8, data, data_len);
 	return 0;
 }
 
@@ -168,7 +179,7 @@ static int parse_read_cap_16(unsigned char *data, unsigned data_len)
 		&thin_provisioning_enabled, &thin_provisioning_zero, &lowest_aligned_lba);
 
 	if (!parsed) {
-		unparsed_data(data, data_len);
+		unparsed_data(data, data_len, data, data_len);
 		return 1;
 	}
 
@@ -189,7 +200,7 @@ static int parse_extended_inquiry_data(uint8_t *data, unsigned data_len)
 {
 	if (data_len < EVPD_MIN_LEN) {
 		printf("Not enough data for EVPD header\n");
-		unparsed_data(data, data_len);
+		unparsed_data(data, data_len, data, data_len);
 		return 1;
 	}
 
@@ -204,10 +215,10 @@ static int parse_extended_inquiry_data(uint8_t *data, unsigned data_len)
 		printf("ASCII len: %u\n", evpd_ascii_len(page_data));
 		printf("ASCII string: '%*s'\n", evpd_ascii_len(page_data), evpd_ascii_data(page_data));
 		if (evpd_ascii_post_data_len(page_data, data_len) > 0)
-			unparsed_data(evpd_ascii_post_data(page_data), evpd_ascii_post_data_len(page_data, data_len));
+			unparsed_data(evpd_ascii_post_data(page_data), evpd_ascii_post_data_len(page_data, data_len), data, data_len);
 	} else {
 		/* TODO: parse more of the extended inquiry pages */
-		unparsed_data(page_data, evpd_page_len(data));
+		unparsed_data(page_data, evpd_page_len(data), data, data_len);
 	}
 	return 0;
 }
@@ -222,7 +233,7 @@ static int parse_simple_inquiry_data(uint8_t *data, unsigned data_len)
 	bool parsed = parse_inquiry(data, data_len, &device_type, vendor, model, rev, serial);
 
 	if (!parsed) {
-		unparsed_data(data, data_len);
+		unparsed_data(data, data_len, data, data_len);
 		return 1;
 	}
 
@@ -243,6 +254,109 @@ static int parse_inquiry_data(uint8_t *cdb, unsigned cdb_len, uint8_t *data, uns
 		return parse_extended_inquiry_data(data, data_len);
 	else
 		return parse_simple_inquiry_data(data, data_len);
+}
+
+static void parse_mode_sense_block_descriptor(uint8_t *data, unsigned data_len)
+{
+	if (data_len != BLOCK_DESCRIPTOR_LENGTH) {
+		printf("Unknown block descriptor\n");
+		unparsed_data(data, data_len, data, data_len);
+		return;
+	}
+
+	printf("Density code: %u\n", block_descriptor_density_code(data));
+	printf("Num blocks: %u\n", block_descriptor_num_blocks(data));
+	printf("Block length: %u\n", block_descriptor_block_length(data));
+}
+
+static unsigned parse_mode_sense_data_page(uint8_t *data, unsigned data_len)
+{
+	if (!mode_sense_data_param_is_valid(data, data_len))
+		return data_len;
+
+	bool subpage_format = mode_sense_data_subpage_format(data);
+	printf("\nPage code: 0x%02x\n", mode_sense_data_page_code(data));
+
+	if (subpage_format)
+		printf("Subpage code: 0x%02x\n", mode_sense_data_subpage_code(data));
+	printf("Page Saveable: %s\n", yes_no(mode_sense_data_parameter_saveable(data)));
+
+	printf("Page len: %u\n", mode_sense_data_param_len(data));
+	unparsed_data(mode_sense_data_param(data), mode_sense_data_param_len(data), data, data_len);
+	return mode_sense_data_page_len(data);
+}
+
+static void parse_mode_sense_data(uint8_t *data, unsigned data_len)
+{
+	while (data_len >= 3) {
+		unsigned parsed_len = parse_mode_sense_data_page(data, data_len);
+		data += parsed_len;
+		data_len -= parsed_len;
+	}
+}
+
+static int parse_mode_sense_10(uint8_t *data, unsigned data_len)
+{
+	if (data_len < MODE_SENSE_10_MIN_LEN) {
+		printf("Not enough data for MODE SENSE header\n");
+		unparsed_data(data, data_len, data, data_len);
+		return 1;
+	}
+
+	printf("Mode Sense 10 data length: %u\n", mode_sense_10_data_len(data));
+	printf("Mode Sense 10 medium type: %u\n", mode_sense_10_medium_type(data));
+	printf("Mode Sense 10 Device specific param: %u\n", mode_sense_10_device_specific_param(data));
+	printf("Mode Sense 10 Long LBA: %s\n", yes_no(mode_sense_10_long_lba(data)));
+	printf("Mode Sense 10 Block descriptor length: %u\n", mode_sense_10_block_descriptor_length(data));
+
+	if (data_len < mode_sense_10_expected_length(data)) {
+		printf("Not enough data to parse full data\n");
+		unparsed_data(data + MODE_SENSE_10_MIN_LEN, data_len - MODE_SENSE_10_MIN_LEN, data, data_len);
+		return 1;
+	}
+
+	if (mode_sense_10_block_descriptor_length(data) > 0) {
+		const unsigned safe_desc_len = safe_len(data, data_len, mode_sense_10_block_descriptor_data(data), mode_sense_10_block_descriptor_length(data)); 
+		parse_mode_sense_block_descriptor(mode_sense_10_block_descriptor_data(data), safe_desc_len);
+	}
+
+	const unsigned safe_data_len = safe_len(data, data_len, mode_sense_10_mode_data(data), mode_sense_10_mode_data_len(data));
+	parse_mode_sense_data(mode_sense_10_mode_data(data), safe_data_len);
+	return 0;
+}
+
+static int parse_mode_sense_6(uint8_t *data, unsigned data_len)
+{
+	if (data_len < MODE_SENSE_6_MIN_LEN) {
+		printf("Not enough data for MODE SENSE 6 header\n");
+		unparsed_data(data, data_len, data, data_len);
+		return 1;
+	}
+
+	printf("Mode Sense 6 data length: %u\n", mode_sense_6_data_len(data));
+	printf("Mode Sense 6 medium type: %u\n", mode_sense_6_medium_type(data));
+	printf("Mode Sense 6 Device specific param: %u\n", mode_sense_6_device_specific_param(data));
+	printf("Mode Sense 6 Block descriptor length: %u\n", mode_sense_6_block_descriptor_length(data));
+
+	if (data_len < mode_sense_6_expected_length(data)) {
+		printf("Not enough data to parse full data\n");
+		unparsed_data(data + MODE_SENSE_6_MIN_LEN, data_len - MODE_SENSE_6_MIN_LEN, data, data_len);
+		return 1;
+	}
+
+	if (!mode_sense_6_is_valid_header(data, data_len)) {
+		printf("Bad data in mode sense header\n");
+		return 1;
+	}
+
+	if (mode_sense_6_block_descriptor_length(data) > 0) {
+		unsigned safe_desc_len = safe_len(data, data_len, mode_sense_6_block_descriptor_data(data), mode_sense_6_block_descriptor_length(data)); 
+		parse_mode_sense_block_descriptor(mode_sense_6_block_descriptor_data(data), safe_desc_len);
+	}
+
+	unsigned safe_data_len = safe_len(data, data_len, mode_sense_6_mode_data(data), mode_sense_6_mode_data_len(data));
+	parse_mode_sense_data(mode_sense_6_mode_data(data), safe_data_len);
+	return 0;
 }
 
 int main(int argc, char **argv)
@@ -285,12 +399,14 @@ int main(int argc, char **argv)
 		case 0x25: return parse_read_cap_10(data, data_len);
 		case 0x9E: return parse_read_cap_16(data, data_len);
 		case 0x12: return parse_inquiry_data(cdb, cdb_len, data, data_len);
-				   /* TODO: parse MODE SENSE */
+		case 0x5A: return parse_mode_sense_10(data, data_len);
+		case 0x1A: return parse_mode_sense_6(data, data_len);
 				   /* TODO: parse RECEIVE DIAGNOSTICS */
 				   /* TODO: parse READ DEFECT DATA */
 		default:
 				   printf("Unsupported CDB opcode %02X\n", cdb[0]);
-				   unparsed_data(data, data_len);
+				   unparsed_data(data, data_len, data, data_len);
+				   break;
 	}
 
 	return 1;

@@ -52,6 +52,30 @@ static inline uint8_t *mode_sense_6_mode_data(uint8_t *data)
 	return data + MODE_SENSE_6_MIN_LEN + mode_sense_6_block_descriptor_length(data);
 }
 
+static inline unsigned mode_sense_6_expected_length(uint8_t *data)
+{
+	return 1 + mode_sense_6_data_len(data); // Add the first byte that is not part of the mode data length
+}
+
+static inline unsigned mode_sense_6_mode_data_len(uint8_t *data)
+{
+	return mode_sense_6_expected_length(data) - MODE_SENSE_6_MIN_LEN - mode_sense_6_block_descriptor_length(data);
+}
+
+static inline bool mode_sense_6_is_valid_header(uint8_t *data, unsigned data_len)
+{
+	if (mode_sense_6_data_len(data) < MODE_SENSE_6_MIN_LEN-1)
+		return false;
+	if (data_len < (unsigned)(mode_sense_6_data_len(data)) + 1)
+		return false;
+	if (mode_sense_6_block_descriptor_length(data) != 0 &&
+		mode_sense_6_block_descriptor_length(data) != 8)
+	{
+		return false;
+	}
+	return true;
+}
+
 /* Mode parameter header for the MODE SENSE 10 */
 #define MODE_SENSE_10_MIN_LEN 8u
 
@@ -94,6 +118,30 @@ static inline uint8_t *mode_sense_10_mode_data(uint8_t *data)
 	return data + MODE_SENSE_10_MIN_LEN + mode_sense_10_block_descriptor_length(data);
 }
 
+static inline unsigned mode_sense_10_expected_length(uint8_t *data)
+{
+	return 2 + mode_sense_10_data_len(data); // Add the first two bytes that are not part of the mode data length
+}
+
+static inline unsigned mode_sense_10_mode_data_len(uint8_t *data)
+{
+	return mode_sense_10_expected_length(data) - MODE_SENSE_10_MIN_LEN - mode_sense_10_block_descriptor_length(data);
+}
+
+static inline bool mode_sense_10_is_valid_header(uint8_t *data, unsigned data_len)
+{
+	if (mode_sense_10_data_len(data) < MODE_SENSE_10_MIN_LEN-2)
+		return false;
+	if (data_len < (unsigned)(mode_sense_10_data_len(data)) + 2)
+		return false;
+	if (mode_sense_10_block_descriptor_length(data) != 0 &&
+		mode_sense_10_block_descriptor_length(data) != 8)
+	{
+		return false;
+	}
+	return true;
+}
+
 /* Regular block descriptor (as opposed to long) */
 #define BLOCK_DESCRIPTOR_LENGTH 8
 #define BLOCK_DESCRIPTOR_NUM_BLOCKS_OVERFLOW 0xFFFFFF
@@ -111,6 +159,56 @@ static inline uint32_t block_descriptor_num_blocks(uint8_t *data)
 static inline uint32_t block_descriptor_block_length(uint8_t *data)
 {
 	return get_uint24(data, 5);
+}
+
+/* Mode Sense page data */
+static inline uint8_t mode_sense_data_page_code(uint8_t *data)
+{
+	return data[0] & 0x3F;
+}
+
+static inline bool mode_sense_data_subpage_format(uint8_t *data)
+{
+	return data[0] & 0x40;
+}
+
+static inline bool mode_sense_data_parameter_saveable(uint8_t *data)
+{
+	return data[0] & 0x80;
+}
+
+/* Caller is required to know if this is a subpage format page or not */
+static inline uint8_t mode_sense_data_subpage_code(uint8_t *data)
+{
+	return data[1];
+}
+
+static inline uint16_t mode_sense_data_page_len(uint8_t *data)
+{
+	return mode_sense_data_subpage_format(data) ? get_uint16(data, 2) + 3 : data[1] + 2;
+}
+
+static inline uint16_t mode_sense_data_param_len(uint8_t *data)
+{
+	return mode_sense_data_subpage_format(data) ? get_uint16(data, 2) : data[1];
+}
+
+static inline uint8_t *mode_sense_data_param(uint8_t *data)
+{
+	return mode_sense_data_subpage_format(data) ? data + 4 : data + 2;
+}
+
+static inline bool mode_sense_data_param_is_valid(uint8_t *data, unsigned data_len)
+{
+	if (data_len < 2)
+		return false;
+	if (mode_sense_data_page_code(data) == 0)
+		return false;
+	if (mode_sense_data_subpage_format(data) && data_len < 4)
+		return false;
+	if (data_len < mode_sense_data_page_len(data))
+		return false;
+	return true;
 }
 
 #endif
