@@ -17,7 +17,9 @@
 #ifndef LIBSCSICMD_RECEIVE_DIAGNOSTICS_H
 #define LIBSCSICMD_RECEIVE_DIAGNOSTICS_H
 
+#include "scsicmd_utils.h"
 #include <stdint.h>
+#include <memory.h>
 
 #define RECV_DIAG_MIN_LEN 4
 
@@ -48,6 +50,99 @@ static inline bool recv_diag_is_valid(uint8_t *data, unsigned data_len)
 	if ((unsigned)recv_diag_get_len(data) + RECV_DIAG_MIN_LEN > data_len)
 		return false;
 	return true;
+}
+
+/* SES Page 1 Configuration */
+
+static inline bool ses_config_valid(uint8_t *data, unsigned data_len)
+{
+	if (data_len < 8)
+		return false;
+	if (recv_diag_get_len(data) < 4)
+		return false;
+	return true;
+}
+
+static inline uint8_t ses_config_num_sub_enclosures(uint8_t *data)
+{
+	return data[1] + 1; // +1 for primary
+}
+
+static inline uint32_t ses_config_generation(uint8_t *data)
+{
+	return get_uint32(data, 4);
+}
+
+static inline uint8_t *ses_config_sub_enclosure(uint8_t *data)
+{
+	return data + 8;
+}
+
+/* Enclosure Descriptor */
+static inline uint8_t ses_config_enclosure_descriptor_process_identifier(uint8_t *data)
+{
+	return (data[0] >> 4) & 0x7;
+}
+
+static inline uint8_t ses_config_enclosure_descriptor_num_processes(uint8_t *data)
+{
+	return data[0] & 0x7;
+}
+
+static inline uint8_t ses_config_enclosure_descriptor_subenclosure_identifier(uint8_t *data)
+{
+	return data[1];
+}
+
+static inline uint8_t ses_config_enclosure_descriptor_num_type_descriptors(uint8_t *data)
+{
+	return data[2];
+}
+
+static inline uint8_t ses_config_enclosure_descriptor_len(uint8_t *data)
+{
+	return data[3];
+}
+
+static inline uint64_t ses_config_enclosure_descriptor_logical_identifier(uint8_t *data)
+{
+	return get_uint64(data, 4);
+}
+
+static inline void _ses_str_cpy(uint8_t *src, unsigned src_len, char *s, unsigned slen)
+{
+	if (slen > src_len)
+		slen = src_len;
+	else
+		slen--;
+
+	memcpy(s, src, slen);
+	s[slen] = 0;
+}
+
+static inline void ses_config_enclosure_descriptor_vendor_identifier(uint8_t *data, char *s, unsigned slen)
+{
+	_ses_str_cpy(data+12, 8, s, slen);
+}
+
+static inline void ses_config_enclosure_descriptor_product_identifier(uint8_t *data, char *s, unsigned slen)
+{
+	_ses_str_cpy(data+20, 16, s, slen);
+}
+
+static inline void ses_config_enclosure_descriptor_revision_level(uint8_t *data, char *s, unsigned slen)
+{
+	_ses_str_cpy(data+36, 4, s, slen);
+}
+
+static inline uint8_t *ses_config_enclosure_descriptor_vendor_info(uint8_t *data)
+{
+	return data + 40;
+}
+
+static inline uint8_t ses_config_enclosure_descriptor_vendor_len(uint8_t *data)
+{
+	return ses_config_enclosure_descriptor_len(data) + 4 - 40;
 }
 
 #endif

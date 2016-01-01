@@ -452,6 +452,53 @@ static void parse_receive_diagnostic_results_pg_0(uint8_t *data, unsigned data_l
 		printf("\t0x%02x\n", data[0]);
 }
 
+static unsigned parse_enclosure_descriptor(uint8_t *data, unsigned data_len)
+{
+	char name[16];
+
+	printf("\nProcess identifier: %u\n", ses_config_enclosure_descriptor_process_identifier(data));
+	printf("Num processes: %u\n", ses_config_enclosure_descriptor_num_processes(data));
+	printf("Subenclosure identifier: %u\n", ses_config_enclosure_descriptor_subenclosure_identifier(data));
+	printf("Num Type Descriptors: %u\n", ses_config_enclosure_descriptor_num_type_descriptors(data));
+	printf("Enclosure descriptor len: %u\n", ses_config_enclosure_descriptor_len(data));
+	printf("Logical identified: %016lx\n", ses_config_enclosure_descriptor_logical_identifier(data));
+
+	ses_config_enclosure_descriptor_vendor_identifier(data, name, sizeof(name));
+	printf("Vendor identifier: %s\n", name);
+
+	ses_config_enclosure_descriptor_product_identifier(data, name, sizeof(name));
+	printf("Product identifier: %s\n", name);
+
+	ses_config_enclosure_descriptor_revision_level(data, name, sizeof(name));
+	printf("Revision level: %s\n", name);
+
+	printf("Vendor info len: %u\n", ses_config_enclosure_descriptor_vendor_len(data));
+	if (ses_config_enclosure_descriptor_vendor_len(data) > 0)
+		unparsed_data(ses_config_enclosure_descriptor_vendor_info(data), ses_config_enclosure_descriptor_vendor_len(data), data, data_len);
+
+	return ses_config_enclosure_descriptor_len(data) + 4;
+}
+
+static void parse_receive_diagnostic_results_pg_1(uint8_t *data, unsigned data_len)
+{
+	unsigned parsed_len = 8;
+	unsigned num_enclosures;
+
+	if (!ses_config_valid(data, data_len))
+		return;
+
+	printf("SES config page:\n");
+	num_enclosures = ses_config_num_sub_enclosures(data);
+	printf("Num subenclosures: %u\n", num_enclosures);
+	printf("Generation code: %u\n", ses_config_generation(data));
+
+	for (; num_enclosures > 0; num_enclosures--)
+		parsed_len += parse_enclosure_descriptor(ses_config_sub_enclosure(data), data_len-8);
+
+	/* TODO: There can be additional enclosures and type descriptors and strings */
+	unparsed_data(data + parsed_len, data_len - parsed_len, data, data_len);
+}
+
 static int parse_receive_diagnostic_results(uint8_t *data, unsigned data_len)
 {
 	if (!recv_diag_is_valid(data, data_len)) {
@@ -463,10 +510,17 @@ static int parse_receive_diagnostic_results(uint8_t *data, unsigned data_len)
 	printf("Page code specific: 0x%02x\n", recv_diag_get_page_code_specific(data));
 	printf("Len: %u\n", recv_diag_get_len(data));
 
-	if (recv_diag_get_page_code(data) == 0)
-		parse_receive_diagnostic_results_pg_0(recv_diag_data(data), safe_len(data, data_len, recv_diag_data(data), recv_diag_get_len(data)));
-	else
-		unparsed_data(recv_diag_data(data), recv_diag_get_len(data), data, data_len); /* TODO: parse SES pages */
+	switch (recv_diag_get_page_code(data)) {
+		case 0:
+			parse_receive_diagnostic_results_pg_0(recv_diag_data(data), safe_len(data, data_len, recv_diag_data(data), recv_diag_get_len(data)));
+			break;
+		case 1:
+			parse_receive_diagnostic_results_pg_1(data, data_len);
+			break;
+		default:
+			unparsed_data(recv_diag_data(data), recv_diag_get_len(data), data, data_len); /* TODO: parse SES pages */
+			break;
+	}
 	return 0;
 }
 
