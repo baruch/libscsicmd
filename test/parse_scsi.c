@@ -121,7 +121,7 @@ static void parse_log_sense_0_supported_log_subpages(uint8_t *data, unsigned dat
 
 static int parse_log_sense(unsigned char *data, unsigned data_len)
 {
-	printf("Parsing\n");
+	printf("Log Sense\n");
 	if (data_len < LOG_SENSE_MIN_LEN) {
 		printf("Insufficient data in log sense to begin parsing\n");
 		return 1;
@@ -156,6 +156,7 @@ static int parse_read_cap_10(unsigned char *data, unsigned data_len)
 	uint32_t block_size;
 	bool parsed = parse_read_capacity_10(data, data_len, &max_lba, &block_size);
 
+	printf("Read Capacity 10\n");
 	if (!parsed) {
 		unparsed_data(data, data_len, data, data_len);
 		return 1;
@@ -175,6 +176,8 @@ static int parse_read_cap_16(unsigned char *data, unsigned data_len)
 	uint32_t block_size;
 	bool prot_enable, thin_provisioning_enabled, thin_provisioning_zero;
 	unsigned p_type, p_i_exponent, logical_blocks_per_physical_block_exponent, lowest_aligned_lba;
+
+	printf("Read Capacity 16\n");
 
 	bool parsed = parse_read_capacity_16(data, data_len, &max_lba, &block_size, &prot_enable,
 		&p_type, &p_i_exponent, &logical_blocks_per_physical_block_exponent,
@@ -200,6 +203,8 @@ static int parse_read_cap_16(unsigned char *data, unsigned data_len)
 
 static int parse_extended_inquiry_data(uint8_t *data, unsigned data_len)
 {
+	printf("Extended Inquiry\n");
+
 	if (data_len < EVPD_MIN_LEN) {
 		printf("Not enough data for EVPD header\n");
 		unparsed_data(data, data_len, data, data_len);
@@ -233,6 +238,8 @@ static int parse_simple_inquiry_data(uint8_t *data, unsigned data_len)
 	scsi_fw_revision_t rev;
 	scsi_serial_t serial;
 	bool parsed = parse_inquiry(data, data_len, &device_type, vendor, model, rev, serial);
+
+	printf("Simple Inquiry\n");
 
 	if (!parsed) {
 		unparsed_data(data, data_len, data, data_len);
@@ -300,6 +307,8 @@ static void parse_mode_sense_data(uint8_t *data, unsigned data_len)
 
 static int parse_mode_sense_10(uint8_t *data, unsigned data_len)
 {
+	printf("Mode Sense 10\n");
+
 	if (data_len < MODE_SENSE_10_MIN_LEN) {
 		printf("Not enough data for MODE SENSE header\n");
 		unparsed_data(data, data_len, data, data_len);
@@ -330,6 +339,8 @@ static int parse_mode_sense_10(uint8_t *data, unsigned data_len)
 
 static int parse_mode_sense_6(uint8_t *data, unsigned data_len)
 {
+	printf("Mode Sense 6\n");
+
 	if (data_len < MODE_SENSE_6_MIN_LEN) {
 		printf("Not enough data for MODE SENSE 6 header\n");
 		unparsed_data(data, data_len, data, data_len);
@@ -401,6 +412,8 @@ static void read_defect_data_format(address_desc_format_e fmt, uint8_t *data, un
 
 static int parse_read_defect_data_10(uint8_t *data, unsigned data_len)
 {
+	printf("Read Defect Data 10\n");
+
 	if (!read_defect_data_10_hdr_is_valid(data, data_len)) {
 		printf("Header is not valid\n");
 		unparsed_data(data, data_len, data, data_len);
@@ -424,6 +437,8 @@ static int parse_read_defect_data_10(uint8_t *data, unsigned data_len)
 
 static int parse_read_defect_data_12(uint8_t *data, unsigned data_len)
 {
+	printf("Read Defect Data 12\n");
+
 	if (!read_defect_data_12_hdr_is_valid(data, data_len)) {
 		printf("Header is not valid\n");
 		unparsed_data(data, data_len, data, data_len);
@@ -501,6 +516,8 @@ static void parse_receive_diagnostic_results_pg_1(uint8_t *data, unsigned data_l
 
 static int parse_receive_diagnostic_results(uint8_t *data, unsigned data_len)
 {
+	printf("Receive Diagnostic Results\n");
+
 	if (!recv_diag_is_valid(data, data_len)) {
 		printf("Data is not valid\n");
 		return 1;
