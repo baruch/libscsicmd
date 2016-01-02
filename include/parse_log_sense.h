@@ -65,16 +65,41 @@ static inline bool log_sense_valid(unsigned data_len)
 /* Log Sense Parameter decode */
 #define LOG_SENSE_MIN_PARAM_LEN 4
 
+#define LOG_PARAM_FLAG_DU 0x80
+#define LOG_PARAM_FLAG_TSD 0x20
+#define LOG_PARAM_FLAG_ETC 0x10
+#define LOG_PARAM_FLAG_TMC_MASK 0x0C
+#define LOG_PARAM_FLAG_FMT_MASK 0x03
+
+#define LOG_PARAM_TMC_EVERY_UPDATE 0
+#define LOG_PARAM_TMC_EQUAL 1
+#define LOG_PARAM_TMC_NOT_EQUAL 2
+#define LOG_PARAM_TMC_GREATER 3
+
+#define LOG_PARAM_FMT_COUNTER_STOP 0
+#define LOG_PARAM_FMT_ASCII 1
+#define LOG_PARAM_FMT_COUNTER_ROLLOVER 2
+#define LOG_PARAM_FMT_BINARY 2
+
 static inline uint16_t log_sense_param_code(uint8_t *param)
 {
 	return get_uint16(param, 0);
 }
 
-/* We ignore the control byte for now, it's very fine grained intention is to
- * allow reset of values and knowing when to reset and when a value stops
- * growing.
- * It's not important to just get the data out.
- */
+inline static uint8_t log_sense_param_flags(uint8_t *param)
+{
+	return param[2];
+}
+
+inline static uint8_t log_sense_param_tmc(uint8_t *param)
+{
+	return (log_sense_param_flags(param) & LOG_PARAM_FLAG_TMC_MASK) >> 2;
+}
+
+inline static uint8_t log_sense_param_fmt(uint8_t *param)
+{
+	return log_sense_param_flags(param) & LOG_PARAM_FLAG_FMT_MASK;
+}
 
 static inline uint8_t log_sense_param_len(uint8_t *param)
 {

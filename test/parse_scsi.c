@@ -95,13 +95,58 @@ static void parse_log_sense_param_informational_exceptions(uint16_t param_code, 
 	}
 }
 
+static void parse_log_sense_param_ascii(uint8_t *param, unsigned param_len)
+{
+	uint8_t *ascii = log_sense_param_data(param);
+	unsigned ascii_len = log_sense_param_len(param);
+	ascii_len = safe_len(param, param_len, ascii, ascii_len);
+
+	printf("ASCII (%u): '", ascii_len);
+	for (; ascii_len > 0; ascii_len--, ascii++)
+		putchar(*ascii);
+	printf("'\n");
+}
+
+static void parse_log_sense_param_counter(uint8_t *param, unsigned param_len)
+{
+	uint8_t *data = log_sense_param_data(param);
+	unsigned data_len = log_sense_param_len(param);
+
+	switch (data_len) {
+		case 4:
+			printf("Counter 32bit: %u\n", get_uint32(data, 0));
+			break;
+		case 8:
+			printf("Counter 64bit: %lu\n", get_uint64(data, 0));
+			break;
+		default:
+			printf("Counter %d bytes\n", data_len);
+			unparsed_data(data, data_len, param, param_len);
+			break;
+	}
+}
+
 static void parse_log_sense_param(uint8_t page, uint8_t subpage, uint16_t param_code, uint8_t *param, uint8_t param_len)
 {
 	(void)subpage;
+
 	switch (page) {
-		case 0x2F: parse_log_sense_param_informational_exceptions(param_code, param, param_len); break;
+		case 0x2F: parse_log_sense_param_informational_exceptions(param_code, log_sense_param_data(param), log_sense_param_len(param)); break;
 		/* TODO: parse more LOG SENSE pages */
-		default: unparsed_data(param, param_len, param, param_len); break;
+		default:
+				   switch (log_sense_param_fmt(param)) {
+					   case LOG_PARAM_FMT_COUNTER_STOP:
+					   case LOG_PARAM_FMT_COUNTER_ROLLOVER:
+						   parse_log_sense_param_counter(param, param_len);
+						   break;
+					   case LOG_PARAM_FMT_ASCII:
+						   parse_log_sense_param_ascii(param, param_len);
+						   break;
+					   default:
+						   unparsed_data(param, param_len, param, param_len);
+						   break;
+				   }
+				   break;
 	}
 }
 
@@ -143,7 +188,8 @@ static int parse_log_sense(unsigned char *data, unsigned data_len)
 			putchar('\n');
 			printf("Log Sense Param Code: 0x%04x\n", log_sense_param_code(param));
 			printf("Log Sense Param Len: %u\n", log_sense_param_len(param));
-			parse_log_sense_param(log_sense_page_code(data), log_sense_subpage_code(data), log_sense_param_code(param), log_sense_param_data(param), log_sense_param_len(param));
+			printf("Log Sense Param format: %u\n", log_sense_param_fmt(param));
+			parse_log_sense_param(log_sense_page_code(data), log_sense_subpage_code(data), log_sense_param_code(param), param, log_sense_param_len(param) + 4);
 		}
 	}
 
