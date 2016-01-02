@@ -88,6 +88,31 @@ typedef enum scsi_device_type_e {
 
 const char *scsi_device_type_name(scsi_device_type_e dev_type);
 
+#define SCSI_PROTOCOL_IDENTIFIER_LIST \
+	X(FC, 0, "Fibre Channel") \
+	X(PARALLEL_SCSI, 1, "Parallel SCSI") \
+	X(SSA, 2, "SSA") \
+	X(IEEE1394, 3, "IEEE 1394") \
+	X(SRP, 4, "SCSI Remote DMA") \
+	X(ISCSI, 5, "iSCSI") \
+	X(SAS, 6, "SAS") \
+	X(ADT, 7, "Automation Drive Interface") \
+	X(ATA, 8, "ATA/ATAPI") \
+	X(RESERVED_9, 9, "Reserved9") \
+	X(RESERVED_A, 10, "Reserved10") \
+	X(RESERVED_B, 11, "Reserved11") \
+	X(RESERVED_C, 12, "Reserved12") \
+	X(RESERVED_D, 13, "Reserved13") \
+	X(RESERVED_E, 14, "Reserved14") \
+	X(NONE, 15, "No Specific Protocol")
+
+#undef X
+#define X(name, val, str) SCSI_PROTOCOL_IDENTIFIER_ ## name,
+typedef enum scsi_protocol_identifier_e {
+	SCSI_PROTOCOL_IDENTIFIER_LIST
+} scsi_protocol_identifier_e;
+#undef X
+
 typedef struct ata_status_t {
 	uint8_t extend;
 	uint8_t error;
