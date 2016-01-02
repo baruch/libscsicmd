@@ -4,7 +4,7 @@ project(libscsicmd)
 export(PACKAGE libscsicmd)
 
 include_directories("include")
-add_compile_options(-Wall -Wextra -Wshadow -Wmissing-prototypes -Winit-self -g)
+add_compile_options(-Wall -Wextra -Wshadow -Wmissing-prototypes -Winit-self -g -O3)
 add_definitions(-D_GNU_SOURCE -D_FORTIFY_SOURCE=2)
 
 add_subdirectory(src)
