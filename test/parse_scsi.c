@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <unistd.h>
+#include <string.h>
 
 #include "parse_log_sense.h"
 #include "parse_mode_sense.h"
@@ -9,6 +11,27 @@
 #include "parse_receive_diagnostics.h"
 #include "scsicmd.h"
 #include "sense_dump.h"
+
+static char *csvtok_last;
+static char *csvtok(char *start)
+{
+	if (start)
+		csvtok_last = start;
+
+	if (!csvtok_last)
+		return NULL;
+
+	char *ret = csvtok_last;
+	for (; *csvtok_last && *csvtok_last != ','; csvtok_last++)
+		;
+	if (*csvtok_last) {
+		*csvtok_last = 0;
+		csvtok_last++;
+	}
+	else
+		csvtok_last = NULL;
+	return ret;
+}
 
 static unsigned char char2val(unsigned char ch)
 {
@@ -593,15 +616,40 @@ int main(int argc, char **argv)
 	unsigned char sense[256];
 	unsigned char data[64*1024];
 	int cdb_len, sense_len, data_len;
+	char *cdb_src, *sense_src, *data_src;
 
-	if (argc != 4) {
+	if (argc != 4 && argc != 1) {
 		printf("Usage: %s \"cdb\" \"sense\" \"data\"\n", argv[0]);
 		return 1;
 	}
 
-	cdb_len = parse_hex(cdb, sizeof(cdb), argv[1]);
-	sense_len = parse_hex(sense, sizeof(sense), argv[2]);
-	data_len = parse_hex(data, sizeof(data), argv[3]);
+	if (argc == 1) {
+		char buf[64*1024];
+		int ret = read(0, buf, sizeof(buf));
+		if (ret <= 0) {
+			printf("Insufficient intput\n");
+			return 1;
+		}
+		csvtok(buf);
+		cdb_src = csvtok(NULL);
+		sense_src = csvtok(NULL);
+		data_src = csvtok(NULL);
+		printf("CDB: %s\n", cdb_src);
+		printf("Sense: %s\n", sense_src);
+		printf("Data: %s\n", data_src);
+		if (cdb_src == NULL || sense_src == NULL || data_src == NULL) {
+			printf("Input csv is invalid\n");
+			return 1;
+		}
+	} else {
+		cdb_src = argv[1];
+		sense_src = argv[2];
+		data_src = argv[3];
+	}
+
+	cdb_len = parse_hex(cdb, sizeof(cdb), cdb_src);
+	sense_len = parse_hex(sense, sizeof(sense), sense_src);
+	data_len = parse_hex(data, sizeof(data), data_src);
 
 	if (cdb_len < 0) {
 		printf("Failed to parse CDB\n");
