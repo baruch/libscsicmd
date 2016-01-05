@@ -544,6 +544,9 @@ static unsigned parse_enclosure_descriptor(uint8_t *data, unsigned data_len)
 {
 	char name[16];
 
+	if (!ses_config_enclosure_descriptor_valid(data, data_len))
+		return data_len;
+
 	printf("\nProcess identifier: %u\n", ses_config_enclosure_descriptor_process_identifier(data));
 	printf("Num processes: %u\n", ses_config_enclosure_descriptor_num_processes(data));
 	printf("Subenclosure identifier: %u\n", ses_config_enclosure_descriptor_subenclosure_identifier(data));

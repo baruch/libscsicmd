@@ -109,6 +109,19 @@ static inline uint64_t ses_config_enclosure_descriptor_logical_identifier(uint8_
 	return get_uint64(data, 4);
 }
 
+static inline bool ses_config_enclosure_descriptor_valid(uint8_t *data, unsigned data_len)
+{
+	if (data_len < 12)
+		return false;
+	if (ses_config_enclosure_descriptor_len(data) < 36 ||
+			ses_config_enclosure_descriptor_len(data) > 252 ||
+			ses_config_enclosure_descriptor_len(data) > data_len)
+	{
+		return false;
+	}
+	return true;
+}
+
 static inline void _ses_str_cpy(uint8_t *src, unsigned src_len, char *s, unsigned slen)
 {
 	if (slen > src_len)
