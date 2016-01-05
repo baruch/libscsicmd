@@ -73,6 +73,8 @@ static inline bool mode_sense_6_is_valid_header(uint8_t *data, unsigned data_len
 	{
 		return false;
 	}
+	if (mode_sense_6_data_len(data) < mode_sense_6_block_descriptor_length(data))
+		return false;
 	return true;
 }
 
