@@ -1,46 +1,14 @@
 #include "scsicmd.h"
+#include "scsicmd_utils.h"
 
 #include <memory.h>
-
-static inline uint16_t scsi_get_16(unsigned char *buf, int idx)
-{
-        return (buf[idx+0] << 8) |
-               (buf[idx+1]);
-}
-
-static inline uint32_t scsi_get_24(unsigned char *buf, int idx)
-{
-        return (buf[idx+0] << 16) |
-               (buf[idx+1] << 8) |
-               (buf[idx+2]);
-}
-
-static inline uint32_t scsi_get_32(unsigned char *buf, int idx)
-{
-        return (buf[idx+0] << 24) |
-               (buf[idx+1] << 16) |
-               (buf[idx+2] << 8) |
-               (buf[idx+3]);
-}
-
-static inline uint64_t scsi_get_64(unsigned char *buf, int idx)
-{
-        return ((uint64_t)buf[idx+0] << 56) |
-               ((uint64_t)buf[idx+1] << 48) |
-               ((uint64_t)buf[idx+2] << 40) |
-               ((uint64_t)buf[idx+3] << 32) |
-               ((uint64_t)buf[idx+4] << 24) |
-               ((uint64_t)buf[idx+5] << 16) |
-               ((uint64_t)buf[idx+6] << 8) |
-               ((uint64_t)buf[idx+7]);
-}
 
 static void parse_sense_key_specific(unsigned char *sks, sense_info_t *info)
 {
         info->sense_key_specific_valid = sks[0] & 0x80;
         if (info->sense_key_specific_valid)
         {
-                uint32_t sense_key_specific = scsi_get_24(sks, 0) & 0x007FFFFF;
+                uint32_t sense_key_specific = get_uint24(sks, 0) & 0x007FFFFF;
                 switch (info->sense_key) {
                         case SENSE_KEY_ILLEGAL_REQUEST:
                                 info->sense_key_specific.illegal_request.command_error = sense_key_specific & 0x400000;
@@ -80,7 +48,7 @@ static bool parse_sense_fixed(unsigned char *sense, int sense_len, sense_info_t 
 
         info->information_valid = sense[0] & 0x80;
         if (info->information_valid)
-                info->information = scsi_get_32(sense, 3);
+                info->information = get_uint32(sense, 3);
 
         info->incorrect_len_indicator = sense[2] & 0x20;
         info->sense_key = sense[2] & 0xF;
@@ -88,7 +56,7 @@ static bool parse_sense_fixed(unsigned char *sense, int sense_len, sense_info_t 
         info->ascq = sense[13];
 
         info->cmd_specific_valid = true;
-        info->cmd_specific = scsi_get_32(sense, 8);
+        info->cmd_specific = get_uint32(sense, 8);
 
         info->fru_code_valid = true;
         info->fru_code = sense[14];
@@ -96,7 +64,7 @@ static bool parse_sense_fixed(unsigned char *sense, int sense_len, sense_info_t 
         parse_sense_key_specific(sense + 15, info);
 
         if (sense_len >= 21)
-            info->vendor_unique_error = scsi_get_16(sense, 20);
+            info->vendor_unique_error = get_uint16(sense, 20);
 
         //uint8_t additional_sense_len = sense[7];
 
@@ -130,13 +98,13 @@ static bool parse_sense_descriptor(unsigned char *sense, int sense_len, sense_in
                         case 0x00: // Information
                                 if (desc_len == 0x0A) {
                                         info->information_valid = sense[idx+2] & 0x80;
-                                        info->information = scsi_get_64(sense, idx+4);
+                                        info->information = get_uint64(sense, idx+4);
                                 }
                                 break;
                         case 0x01: // Command specific information
                                 if (desc_len == 0x0A) {
                                         info->cmd_specific_valid = true;
-                                        info->cmd_specific = scsi_get_64(sense, idx+4);
+                                        info->cmd_specific = get_uint64(sense, idx+4);
                                 }
                                 break;
                         case 0x02: // Sense key specific
@@ -191,7 +159,7 @@ static bool parse_sense_descriptor(unsigned char *sense, int sense_len, sense_in
                                 break;
                         case 0x80: // Vendor Unique Unit Error
                                 if (desc_len == 0x02) {
-                                    info->vendor_unique_error = scsi_get_16(sense, idx+2);
+                                    info->vendor_unique_error = get_uint16(sense, idx+2);
                                 }
                                 break;
                 }
