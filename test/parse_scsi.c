@@ -54,17 +54,21 @@ static void print_hex(uint8_t *buf, unsigned buf_len)
 	printf("\n");
 }
 
-static int parse_hex(unsigned char *buf, unsigned buf_size, char *str)
+static unsigned char *parse_hex(char *str, int *len_out)
 {
+	char buf[64*1024];
+	const unsigned buf_size = sizeof(buf);
 	unsigned char ch;
 	unsigned len = 0;
 	bool top_char = true;
+
+	*len_out = -1;
 
 	for (; *str && len < buf_size; str++) {
 		if (isspace(*str)) {
 			if (!top_char) {
 				printf("Leftover character\n");
-				return -1;
+				return NULL;
 			}
 		} else if (isxdigit(*str)) {
 			if (top_char) {
@@ -76,10 +80,15 @@ static int parse_hex(unsigned char *buf, unsigned buf_size, char *str)
 			}
 		} else {
 			printf("Unknown character '%c'\n", *str);
-			return -1;
+			return NULL;
 		}
 	}
-	return len;
+
+	// For valgrind and AFL, copy the data to a malloc buffer to easily detect out of bounds accesses
+	unsigned char *out = malloc(len);
+	memcpy(out, buf, len);
+	*len_out = len;
+	return out;
 }
 
 static inline const char *yes_no(bool val)
@@ -619,9 +628,9 @@ static int parse_receive_diagnostic_results(uint8_t *data, unsigned data_len)
 
 int main(int argc, char **argv)
 {
-	unsigned char cdb[32];
-	unsigned char sense[256];
-	unsigned char data[64*1024];
+	unsigned char *cdb;
+	unsigned char *sense;
+	unsigned char *data;
 	int cdb_len, sense_len, data_len;
 	char *cdb_src, *sense_src, *data_src;
 
@@ -656,9 +665,9 @@ int main(int argc, char **argv)
 		data_src = argv[3];
 	}
 
-	cdb_len = parse_hex(cdb, sizeof(cdb), cdb_src);
-	sense_len = parse_hex(sense, sizeof(sense), sense_src);
-	data_len = parse_hex(data, sizeof(data), data_src);
+	cdb = parse_hex(cdb_src, &cdb_len);
+	sense = parse_hex(sense_src, &sense_len);
+	data = parse_hex(data_src, &data_len);
 
 	if (cdb_len < 0) {
 		printf("Failed to parse CDB\n");
