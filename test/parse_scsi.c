@@ -637,6 +637,8 @@ int main(int argc, char **argv)
 			printf("Insufficient intput\n");
 			return 1;
 		}
+		buf[ret] = 0;
+
 		csvtok(buf);
 		cdb_src = csvtok(NULL);
 		sense_src = csvtok(NULL);
