@@ -89,7 +89,10 @@ static inline const char *yes_no(bool val)
 
 static unsigned safe_len(uint8_t *start, unsigned len, uint8_t *subbuf, unsigned subbuf_len)
 {
-	const unsigned start_offset = subbuf - start;
+	const int start_offset = subbuf - start;
+
+	if (start_offset < 0 || (unsigned)start_offset > len)
+		return 0;
 
 	if (subbuf_len + start_offset > len)
 		return len - start_offset;
@@ -577,8 +580,8 @@ static void parse_receive_diagnostic_results_pg_1(uint8_t *data, unsigned data_l
 	printf("Num subenclosures: %u\n", num_enclosures);
 	printf("Generation code: %u\n", ses_config_generation(data));
 
-	for (; num_enclosures > 0; num_enclosures--)
-		parsed_len += parse_enclosure_descriptor(ses_config_sub_enclosure(data), data_len-8);
+	for (; num_enclosures > 0 && parsed_len < data_len; num_enclosures--)
+		parsed_len += parse_enclosure_descriptor(ses_config_sub_enclosure(data), data_len-parsed_len);
 
 	/* TODO: There can be additional enclosures and type descriptors and strings */
 	unparsed_data(data + parsed_len, data_len - parsed_len, data, data_len);
