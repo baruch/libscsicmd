@@ -298,6 +298,9 @@ static int parse_extended_inquiry_data(uint8_t *data, unsigned data_len)
 	printf("EVPD page code: 0x%02X\n", evpd_page_code(data));
 	printf("EVPD data len: %u\n", evpd_page_len(data));
 
+	if (!evpd_is_valid(data, data_len))
+		return 0;
+
 	uint8_t *page_data = evpd_page_data(data);
 
 	if (evpd_is_ascii_page(evpd_page_code(data))) {

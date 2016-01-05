@@ -72,4 +72,15 @@ static inline unsigned evpd_ascii_post_data_len(uint8_t *evpd_body, unsigned ful
 	return full_data_len - EVPD_MIN_LEN - 2 - evpd_ascii_len(evpd_body);
 }
 
+static inline bool evpd_is_valid(uint8_t *data, unsigned data_len)
+{
+	if (data_len < EVPD_MIN_LEN)
+		return false;
+
+	if (evpd_page_len(data) > data_len)
+		return false;
+
+	return true;
+}
+
 #endif
