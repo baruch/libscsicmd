@@ -99,8 +99,9 @@ static unsigned safe_len(uint8_t *start, unsigned len, uint8_t *subbuf, unsigned
 
 static void unparsed_data(uint8_t *buf, unsigned buf_len, uint8_t *start, unsigned total_len)
 {
+	const unsigned len = safe_len(start, total_len, buf, buf_len);
 	printf("Unparsed data: ");
-	print_hex(buf, safe_len(start, total_len, buf, buf_len));
+	print_hex(buf, len);
 }
 
 static void parse_log_sense_param_informational_exceptions(uint16_t param_code, uint8_t *param, uint8_t param_len)
