@@ -185,9 +185,9 @@ static inline uint8_t mode_sense_data_subpage_code(uint8_t *data)
 	return data[1];
 }
 
-static inline uint16_t mode_sense_data_page_len(uint8_t *data)
+static inline unsigned mode_sense_data_page_len(uint8_t *data)
 {
-	return mode_sense_data_subpage_format(data) ? get_uint16(data, 2) + 3 : data[1] + 2;
+	return mode_sense_data_subpage_format(data) ? (unsigned)get_uint16(data, 2) + 3 : data[1] + 2;
 }
 
 static inline uint16_t mode_sense_data_param_len(uint8_t *data)
