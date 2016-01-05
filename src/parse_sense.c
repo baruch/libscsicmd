@@ -71,7 +71,7 @@ static bool parse_sense_fixed(unsigned char *sense, int sense_len, sense_info_t 
         return true;
 }
 
-static bool parse_sense_descriptor(unsigned char *sense, int sense_len, sense_info_t *info)
+static bool parse_sense_descriptor(unsigned char *sense, unsigned sense_len, sense_info_t *info)
 {
         if (sense_len < 8)
                 return false;
@@ -80,12 +80,12 @@ static bool parse_sense_descriptor(unsigned char *sense, int sense_len, sense_in
         info->asc = sense[2];
         info->ascq = sense[3];
 
-        uint8_t additional_sense_length = sense[7];
+        unsigned additional_sense_length = sense[7];
         if (sense_len > additional_sense_length + 8)
                 sense_len = additional_sense_length + 8;
 
-        uint8_t idx;
-        uint8_t desc_len;
+        unsigned idx;
+        unsigned desc_len;
 
         for (idx = 8; idx < sense_len; idx += desc_len+2) {
                 uint8_t desc_type = sense[idx];
