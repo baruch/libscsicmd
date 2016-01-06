@@ -13,7 +13,16 @@ Build
 The build system is using cmake, you need to get it before you can build.
 
 To build, run:
-  cmake . && make
+
+    cmake . && make
+
+For a developer debug build use:
+
+    cmake -DCMAKE_BUILD_TYPE=Debug .
+
+To build for American Fuzzy Lop instrumentation:
+
+    cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_COMPILER=/usr/bin/afl-gcc -DCMAKE_C_FLAGS=-DAFL_HARDEN=1 .
 
 Author
 ======
