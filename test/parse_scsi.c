@@ -209,9 +209,11 @@ static int parse_log_sense(unsigned char *data, unsigned data_len)
 
 	if (log_sense_page_code(data) == 0) {
 		if (log_sense_subpage_format(data) == 0)
-			parse_log_sense_0_supported_log_pages(log_sense_data(data), log_sense_data_len(data));
+			parse_log_sense_0_supported_log_pages(log_sense_data(data),
+					safe_len(data, data_len, log_sense_data(data), log_sense_data_len(data)));
 		else
-			parse_log_sense_0_supported_log_subpages(log_sense_data(data), log_sense_data_len(data));
+			parse_log_sense_0_supported_log_subpages(log_sense_data(data),
+					safe_len(data, data_len, log_sense_data(data), log_sense_data_len(data)));
 	} else {
 		uint8_t *param;
 		for_all_log_sense_params(data, data_len, param) {
