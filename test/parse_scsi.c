@@ -13,6 +13,12 @@
 #include "sense_dump.h"
 
 static char *csvtok_last;
+
+static void csvtok_reset(void)
+{
+	csvtok_last = NULL;
+}
+
 static char *csvtok(char *start)
 {
 	if (start)
@@ -609,48 +615,29 @@ static int parse_receive_diagnostic_results(uint8_t *data, unsigned data_len)
 	return 0;
 }
 
-int main(int argc, char **argv)
+static int process_data(char *cdb_src, char *sense_src, char *data_src)
 {
 	unsigned char *cdb;
 	unsigned char *sense;
 	unsigned char *data;
 	int cdb_len, sense_len, data_len;
-	char *cdb_src, *sense_src, *data_src;
 
-	if (argc != 4 && argc != 1) {
-		printf("Usage: %s \"cdb\" \"sense\" \"data\"\n", argv[0]);
+	printf("CDB: %s\n", cdb_src);
+	printf("Sense: %s\n", sense_src);
+	printf("Data: %s\n", data_src);
+
+	if (cdb_src == NULL || sense_src == NULL || data_src == NULL) {
+		printf("Input csv is invalid\n");
 		return 1;
-	}
-
-	if (argc == 1) {
-		char buf[64*1024];
-		int ret = read(0, buf, sizeof(buf));
-		if (ret <= 0) {
-			printf("Insufficient intput\n");
-			return 1;
-		}
-		buf[ret] = 0;
-
-		csvtok(buf);
-		cdb_src = csvtok(NULL);
-		sense_src = csvtok(NULL);
-		data_src = csvtok(NULL);
-		printf("CDB: %s\n", cdb_src);
-		printf("Sense: %s\n", sense_src);
-		printf("Data: %s\n", data_src);
-		if (cdb_src == NULL || sense_src == NULL || data_src == NULL) {
-			printf("Input csv is invalid\n");
-			return 1;
-		}
-	} else {
-		cdb_src = argv[1];
-		sense_src = argv[2];
-		data_src = argv[3];
 	}
 
 	cdb = parse_hex(cdb_src, &cdb_len);
 	sense = parse_hex(sense_src, &sense_len);
 	data = parse_hex(data_src, &data_len);
+
+	printf("CDB Len: %d\n", cdb_len);
+	printf("Sense Len: %d\n", sense_len);
+	printf("Data Len: %d\n", data_len);
 
 	if (cdb_len < 0) {
 		printf("Failed to parse CDB\n");
@@ -685,6 +672,63 @@ int main(int argc, char **argv)
 				   printf("Unsupported CDB opcode %02X\n", cdb[0]);
 				   unparsed_data(data, data_len, data, data_len);
 				   break;
+	}
+
+	return 1;
+}
+
+static ssize_t read_newline(int fd, char *buf, size_t buf_sz)
+{
+	ssize_t data_read = 0;
+
+	while (data_read < (ssize_t)buf_sz) {
+		int ret = read(fd, buf+data_read, 1);
+		if (ret < 0)
+			return -1;
+		else if (ret == 0)
+			return data_read;
+
+		if (buf[data_read] == '\n' || buf[data_read] == '\r')
+			return data_read;
+		else
+			data_read++;
+	}
+
+	return data_read;
+}
+
+int main(int argc, char **argv)
+{
+	char *cdb_src, *sense_src, *data_src;
+
+	if (argc != 4 && argc != 1) {
+		printf("Usage: %s \"cdb\" \"sense\" \"data\"\n", argv[0]);
+		return 1;
+	}
+
+	if (argc == 1) {
+		while (__AFL_LOOP(1000)) {
+			char buf[64*1024];
+			memset(buf, 0, sizeof(buf));
+			int ret = read_newline(0, buf, sizeof(buf));
+			if (ret <= 0) {
+				printf("Insufficient intput\n");
+				return 1;
+			}
+			buf[ret] = 0;
+
+			csvtok_reset();
+			csvtok(buf);
+			cdb_src = csvtok(NULL);
+			sense_src = csvtok(NULL);
+			data_src = csvtok(NULL);
+			process_data(cdb_src, sense_src, data_src);
+		}
+	} else {
+		cdb_src = argv[1];
+		sense_src = argv[2];
+		data_src = argv[3];
+		process_data(cdb_src, sense_src, data_src);
 	}
 
 	return 1;
