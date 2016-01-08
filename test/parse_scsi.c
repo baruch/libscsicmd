@@ -718,7 +718,7 @@ int main(int argc, char **argv)
 			memset(buf, 0, sizeof(buf));
 			int ret = read_newline(buf, sizeof(buf));
 			if (ret <= 0) {
-				printf("Insufficient intput\n");
+				printf("Insufficient input\n");
 				return 1;
 			}
 			buf[ret] = 0;
