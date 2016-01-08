@@ -54,7 +54,7 @@ static inline bool recv_diag_is_valid(uint8_t *data, unsigned data_len)
 
 /* SES Page 1 Configuration */
 
-static inline bool ses_config_valid(uint8_t *data, unsigned data_len)
+static inline bool ses_config_is_valid(uint8_t *data, unsigned data_len)
 {
 	if (data_len < 8)
 		return false;
@@ -109,7 +109,7 @@ static inline uint64_t ses_config_enclosure_descriptor_logical_identifier(uint8_
 	return get_uint64(data, 4);
 }
 
-static inline bool ses_config_enclosure_descriptor_valid(uint8_t *data, unsigned data_len)
+static inline bool ses_config_enclosure_descriptor_is_valid(uint8_t *data, unsigned data_len)
 {
 	if (data_len < 12)
 		return false;

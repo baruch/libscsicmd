@@ -2,7 +2,7 @@
 
 bool log_sense_page_informational_exceptions(uint8_t *page, unsigned page_len, uint8_t *asc, uint8_t *ascq, uint8_t *temperature)
 {
-	if (!log_sense_valid(page_len))
+	if (!log_sense_is_valid(page_len))
 		return false;
 	if (log_sense_page_code(page) != 0x2F)
 		return false;

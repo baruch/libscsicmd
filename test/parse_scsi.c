@@ -561,7 +561,7 @@ static unsigned parse_enclosure_descriptor(uint8_t *data, unsigned data_len)
 {
 	char name[16];
 
-	if (!ses_config_enclosure_descriptor_valid(data, data_len))
+	if (!ses_config_enclosure_descriptor_is_valid(data, data_len))
 		return data_len;
 
 	printf("\nProcess identifier: %u\n", ses_config_enclosure_descriptor_process_identifier(data));
@@ -592,7 +592,7 @@ static void parse_receive_diagnostic_results_pg_1(uint8_t *data, unsigned data_l
 	unsigned parsed_len = 8;
 	unsigned num_enclosures;
 
-	if (!ses_config_valid(data, data_len))
+	if (!ses_config_is_valid(data, data_len))
 		return;
 
 	printf("SES config page:\n");

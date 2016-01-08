@@ -55,7 +55,7 @@ static inline uint8_t *log_sense_data(uint8_t *data)
 	return data + LOG_SENSE_MIN_LEN;
 }
 
-static inline bool log_sense_valid(unsigned data_len)
+static inline bool log_sense_is_valid(unsigned data_len)
 {
 	if (data_len < LOG_SENSE_MIN_LEN)
 		return false;
