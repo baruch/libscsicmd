@@ -3,6 +3,7 @@
 #include <stdbool.h>
 #include <unistd.h>
 #include <string.h>
+#include <stdlib.h>
 
 #include "parse_log_sense.h"
 #include "parse_mode_sense.h"
@@ -617,11 +618,11 @@ static int parse_receive_diagnostic_results(uint8_t *data, unsigned data_len)
 	return 0;
 }
 
-static int process_data(char *cdb_src, char *sense_src, char *data_src)
+static void process_data(char *cdb_src, char *sense_src, char *data_src)
 {
-	unsigned char *cdb;
-	unsigned char *sense;
-	unsigned char *data;
+	unsigned char *cdb = NULL;
+	unsigned char *sense = NULL;
+	unsigned char *data = NULL;
 	int cdb_len, sense_len, data_len;
 
 	printf("CDB: %s\n", cdb_src);
@@ -630,7 +631,7 @@ static int process_data(char *cdb_src, char *sense_src, char *data_src)
 
 	if (cdb_src == NULL || sense_src == NULL || data_src == NULL) {
 		printf("Input csv is invalid\n");
-		return 1;
+		return;
 	}
 
 	cdb = parse_hex(cdb_src, &cdb_len);
@@ -643,40 +644,43 @@ static int process_data(char *cdb_src, char *sense_src, char *data_src)
 
 	if (cdb_len < 0) {
 		printf("Failed to parse CDB\n");
-		return 1;
+		goto Exit;
 	}
 	if (sense_len < 0) {
 		printf("Failed to parse SENSE\n");
-		return 1;
+		goto Exit;
 	}
 	if (data_len < 0) {
 		printf("Failed to parse DATA\n");
-		return 1;
+		goto Exit;
 	}
 
 	if (sense_len > 0) {
 		printf("Sense data indicates an error, not parsing data\n");
 		sense_dump(sense, sense_len);
-		return 1;
+		goto Exit;
 	}
 
 	switch (cdb[0]) {
-		case 0x4D: return parse_log_sense(data, data_len);
-		case 0x25: return parse_read_cap_10(data, data_len);
-		case 0x9E: return parse_read_cap_16(data, data_len);
-		case 0x12: return parse_inquiry_data(cdb, cdb_len, data, data_len);
-		case 0x5A: return parse_mode_sense_10(data, data_len);
-		case 0x1A: return parse_mode_sense_6(data, data_len);
-		case 0x1C: return parse_receive_diagnostic_results(data, data_len);
-		case 0x37: return parse_read_defect_data_10(data, data_len);
-		case 0xB7: return parse_read_defect_data_12(data, data_len);
+		case 0x4D: parse_log_sense(data, data_len);
+		case 0x25: parse_read_cap_10(data, data_len);
+		case 0x9E: parse_read_cap_16(data, data_len);
+		case 0x12: parse_inquiry_data(cdb, cdb_len, data, data_len);
+		case 0x5A: parse_mode_sense_10(data, data_len);
+		case 0x1A: parse_mode_sense_6(data, data_len);
+		case 0x1C: parse_receive_diagnostic_results(data, data_len);
+		case 0x37: parse_read_defect_data_10(data, data_len);
+		case 0xB7: parse_read_defect_data_12(data, data_len);
 		default:
 				   printf("Unsupported CDB opcode %02X\n", cdb[0]);
 				   unparsed_data(data, data_len, data, data_len);
 				   break;
 	}
 
-	return 1;
+Exit:
+	free(cdb);
+	free(sense);
+	free(data);
 }
 
 static ssize_t read_newline(char *buf, size_t buf_sz)
@@ -731,5 +735,5 @@ int main(int argc, char **argv)
 		process_data(cdb_src, sense_src, data_src);
 	}
 
-	return 1;
+	return 0;
 }
