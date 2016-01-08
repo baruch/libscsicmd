@@ -111,9 +111,27 @@ static inline uint8_t *log_sense_param_data(uint8_t *param)
 	return param + LOG_SENSE_MIN_PARAM_LEN;
 }
 
+static inline bool log_sense_param_is_valid(uint8_t *data, unsigned data_len, uint8_t *param)
+{
+	if (param < data)
+		return false;
+
+	const unsigned param_offset = param - data;
+	if (param_offset > data_len)
+		return false;
+
+	if (param_offset + LOG_SENSE_MIN_PARAM_LEN > data_len)
+		return false;
+
+	if (param_offset + LOG_SENSE_MIN_PARAM_LEN + log_sense_param_len(param) > data_len)
+		return false;
+
+	return true;
+}
+
 #define for_all_log_sense_params(data, data_len, param) \
 	for (param = log_sense_data(data); \
-		 (param - data) < data_len && (param + LOG_SENSE_MIN_PARAM_LEN - data) < data_len && (param + LOG_SENSE_MIN_PARAM_LEN + log_sense_param_len(param) - data) < data_len; \
+		 log_sense_param_is_valid(data, data_len, param); \
 		 param = param + LOG_SENSE_MIN_PARAM_LEN + log_sense_param_len(param))
 
 bool log_sense_page_informational_exceptions(uint8_t *page, unsigned page_len, uint8_t *asc, uint8_t *ascq, uint8_t *temperature);
