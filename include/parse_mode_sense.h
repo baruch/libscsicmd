@@ -215,7 +215,7 @@ static inline bool mode_sense_data_param_is_valid(uint8_t *data, unsigned data_l
 
 
 #define for_all_mode_sense_pages(data, data_len, mode_data, mode_data_len, page, remaining_len) \
-	for (remaining_len = data + safe_len(data, data_len, mode_data, mode_data_len) - mode_data, page = mode_data; \
+	for (remaining_len = mode_data - data + safe_len(data, data_len, mode_data, mode_data_len), page = mode_data; \
 		 remaining_len >= 3 && mode_sense_data_param_is_valid(page, remaining_len); \
 		 remaining_len += mode_sense_data_param_len(page), page += mode_sense_data_page_len(page))
 
