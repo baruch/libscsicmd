@@ -400,6 +400,7 @@ static int parse_mode_sense_10(uint8_t *data, unsigned data_len)
 	unsigned remaining_len;
 	uint8_t *mode_page;
 	for_all_mode_sense_10_pages(data, data_len, mode_page, remaining_len) {
+		printf("\nRemaining len: %u\n", remaining_len);
 		parse_mode_sense_data_page(mode_page, remaining_len);
 	}
 	return 0;
@@ -439,6 +440,7 @@ static int parse_mode_sense_6(uint8_t *data, unsigned data_len)
 	unsigned remaining_len;
 	uint8_t *mode_page;
 	for_all_mode_sense_6_pages(data, data_len, mode_page, remaining_len) {
+		printf("Remaining len: %u\n", remaining_len);
 		parse_mode_sense_data_page(mode_page, remaining_len);
 	}
 	return 0;
