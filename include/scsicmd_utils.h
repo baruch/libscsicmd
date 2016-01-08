@@ -52,4 +52,17 @@ static inline uint64_t get_uint64(unsigned char *buf, int start)
 		   (uint64_t)buf[start+7];
 }
 
+static inline unsigned safe_len(uint8_t *start, unsigned len, uint8_t *subbuf, unsigned subbuf_len)
+{
+	const int start_offset = subbuf - start;
+
+	if (start_offset < 0 || (unsigned)start_offset > len)
+		return 0;
+
+	if (subbuf_len + start_offset > len)
+		return len - start_offset;
+	else
+		return subbuf_len;
+}
+
 #endif

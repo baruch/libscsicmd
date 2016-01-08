@@ -96,19 +96,6 @@ static inline const char *yes_no(bool val)
 	return val ? "yes" : "no";
 }
 
-static unsigned safe_len(uint8_t *start, unsigned len, uint8_t *subbuf, unsigned subbuf_len)
-{
-	const int start_offset = subbuf - start;
-
-	if (start_offset < 0 || (unsigned)start_offset > len)
-		return 0;
-
-	if (subbuf_len + start_offset > len)
-		return len - start_offset;
-	else
-		return subbuf_len;
-}
-
 static void unparsed_data(uint8_t *buf, unsigned buf_len, uint8_t *start, unsigned total_len)
 {
 	const unsigned len = safe_len(start, total_len, buf, buf_len);
@@ -363,11 +350,8 @@ static void parse_mode_sense_block_descriptor(uint8_t *data, unsigned data_len)
 	printf("Block length: %u\n", block_descriptor_block_length(data));
 }
 
-static unsigned parse_mode_sense_data_page(uint8_t *data, unsigned data_len)
+static void parse_mode_sense_data_page(uint8_t *data, unsigned data_len)
 {
-	if (!mode_sense_data_param_is_valid(data, data_len))
-		return data_len;
-
 	bool subpage_format = mode_sense_data_subpage_format(data);
 	printf("\nPage code: 0x%02x\n", mode_sense_data_page_code(data));
 
@@ -378,21 +362,6 @@ static unsigned parse_mode_sense_data_page(uint8_t *data, unsigned data_len)
 	printf("Page len: %u\n", mode_sense_data_param_len(data));
 	/* TODO: Parse the mode sense data */
 	unparsed_data(mode_sense_data_param(data), mode_sense_data_param_len(data), data, data_len);
-
-	if (mode_sense_data_page_len(data) > data_len)
-		return data_len;
-
-	const unsigned len = safe_len(data, data_len, data, mode_sense_data_page_len(data));
-	return len;
-}
-
-static void parse_mode_sense_data(uint8_t *data, unsigned data_len)
-{
-	while (data_len >= 3) {
-		unsigned parsed_len = parse_mode_sense_data_page(data, data_len);
-		data += parsed_len;
-		data_len -= parsed_len;
-	}
 }
 
 static int parse_mode_sense_10(uint8_t *data, unsigned data_len)
@@ -422,8 +391,11 @@ static int parse_mode_sense_10(uint8_t *data, unsigned data_len)
 		parse_mode_sense_block_descriptor(mode_sense_10_block_descriptor_data(data), safe_desc_len);
 	}
 
-	const unsigned safe_data_len = safe_len(data, data_len, mode_sense_10_mode_data(data), mode_sense_10_mode_data_len(data));
-	parse_mode_sense_data(mode_sense_10_mode_data(data), safe_data_len);
+	unsigned remaining_len;
+	uint8_t *mode_page;
+	for_all_mode_sense_10_pages(data, data_len, mode_page, remaining_len) {
+		parse_mode_sense_data_page(mode_page, remaining_len);
+	}
 	return 0;
 }
 
@@ -458,8 +430,11 @@ static int parse_mode_sense_6(uint8_t *data, unsigned data_len)
 		parse_mode_sense_block_descriptor(mode_sense_6_block_descriptor_data(data), safe_desc_len);
 	}
 
-	unsigned safe_data_len = safe_len(data, data_len, mode_sense_6_mode_data(data), mode_sense_6_mode_data_len(data));
-	parse_mode_sense_data(mode_sense_6_mode_data(data), safe_data_len);
+	unsigned remaining_len;
+	uint8_t *mode_page;
+	for_all_mode_sense_6_pages(data, data_len, mode_page, remaining_len) {
+		parse_mode_sense_data_page(mode_page, remaining_len);
+	}
 	return 0;
 }
 

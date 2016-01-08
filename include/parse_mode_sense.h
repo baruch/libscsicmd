@@ -213,4 +213,16 @@ static inline bool mode_sense_data_param_is_valid(uint8_t *data, unsigned data_l
 	return true;
 }
 
+
+#define for_all_mode_sense_pages(data, data_len, mode_data, mode_data_len, page, remaining_len) \
+	for (remaining_len = data + safe_len(data, data_len, mode_data, mode_data_len) - mode_data, page = mode_data; \
+		 remaining_len >= 3 && mode_sense_data_param_is_valid(page, remaining_len); \
+		 remaining_len += mode_sense_data_param_len(page), page += mode_sense_data_page_len(page))
+
+#define for_all_mode_sense_6_pages(data, data_len, page, remaining_len) \
+	for_all_mode_sense_pages(data, data_len, mode_sense_6_mode_data(data), mode_sense_6_mode_data_len(data), page, remaining_len)
+
+#define for_all_mode_sense_10_pages(data, data_len, page, remaining_len) \
+	for_all_mode_sense_pages(data, data_len, mode_sense_10_mode_data(data), mode_sense_10_mode_data_len(data), page, remaining_len)
+
 #endif
