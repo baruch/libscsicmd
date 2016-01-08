@@ -101,7 +101,7 @@ inline static uint8_t log_sense_param_fmt(uint8_t *param)
 	return log_sense_param_flags(param) & LOG_PARAM_FLAG_FMT_MASK;
 }
 
-static inline uint8_t log_sense_param_len(uint8_t *param)
+static inline unsigned log_sense_param_len(uint8_t *param)
 {
 	return param[3];
 }

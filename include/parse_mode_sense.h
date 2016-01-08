@@ -22,7 +22,7 @@
 /* Mode parameter header for the MODE SENSE 6 */
 #define MODE_SENSE_6_MIN_LEN 4u
 
-static inline uint8_t mode_sense_6_data_len(uint8_t *data)
+static inline unsigned mode_sense_6_data_len(uint8_t *data)
 {
 	return data[0];
 }
@@ -81,7 +81,7 @@ static inline bool mode_sense_6_is_valid_header(uint8_t *data, unsigned data_len
 /* Mode parameter header for the MODE SENSE 10 */
 #define MODE_SENSE_10_MIN_LEN 8u
 
-static inline uint16_t mode_sense_10_data_len(uint8_t *data)
+static inline unsigned mode_sense_10_data_len(uint8_t *data)
 {
 	return get_uint16(data, 0);
 }
@@ -102,7 +102,7 @@ static inline bool mode_sense_10_long_lba(uint8_t *data)
 }
 
 /* SPC4 says length is times 8 without long lba and times 16 with it but it seems the value is taken verbatim */
-static inline uint16_t mode_sense_10_block_descriptor_length(uint8_t *data)
+static inline unsigned mode_sense_10_block_descriptor_length(uint8_t *data)
 {
 	return get_uint16(data, 6);
 }
@@ -187,10 +187,10 @@ static inline uint8_t mode_sense_data_subpage_code(uint8_t *data)
 
 static inline unsigned mode_sense_data_page_len(uint8_t *data)
 {
-	return mode_sense_data_subpage_format(data) ? (unsigned)get_uint16(data, 2) + 3 : (unsigned)data[1] + 2;
+	return mode_sense_data_subpage_format(data) ? 3 + (unsigned)(get_uint16(data, 2)) : 2 + (unsigned)(data[1]);
 }
 
-static inline uint16_t mode_sense_data_param_len(uint8_t *data)
+static inline unsigned mode_sense_data_param_len(uint8_t *data)
 {
 	return mode_sense_data_subpage_format(data) ? get_uint16(data, 2) : data[1];
 }
