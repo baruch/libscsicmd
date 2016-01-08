@@ -713,7 +713,7 @@ int main(int argc, char **argv)
 	}
 
 	if (argc == 1) {
-		while (__AFL_LOOP(1000)) {
+		while (__AFL_LOOP(30000)) {
 			char buf[64*1024];
 			memset(buf, 0, sizeof(buf));
 			int ret = read_newline(buf, sizeof(buf));
