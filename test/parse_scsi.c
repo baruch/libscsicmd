@@ -679,21 +679,19 @@ static int process_data(char *cdb_src, char *sense_src, char *data_src)
 	return 1;
 }
 
-static ssize_t read_newline(int fd, char *buf, size_t buf_sz)
+static ssize_t read_newline(char *buf, size_t buf_sz)
 {
 	ssize_t data_read = 0;
 
 	while (data_read < (ssize_t)buf_sz) {
-		int ret = read(fd, buf+data_read, 1);
-		if (ret < 0)
-			return -1;
-		else if (ret == 0)
+		int ch = getchar();
+		if (ch == EOF)
+			break;
+
+		if (ch == '\n' || ch == '\r')
 			return data_read;
 
-		if (buf[data_read] == '\n' || buf[data_read] == '\r')
-			return data_read;
-		else
-			data_read++;
+		buf[data_read++] = ch;
 	}
 
 	return data_read;
@@ -712,7 +710,7 @@ int main(int argc, char **argv)
 		while (__AFL_LOOP(1000)) {
 			char buf[64*1024];
 			memset(buf, 0, sizeof(buf));
-			int ret = read_newline(0, buf, sizeof(buf));
+			int ret = read_newline(buf, sizeof(buf));
 			if (ret <= 0) {
 				printf("Insufficient intput\n");
 				return 1;
