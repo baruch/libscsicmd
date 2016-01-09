@@ -661,15 +661,15 @@ static void process_data(char *cdb_src, char *sense_src, char *data_src)
 	}
 
 	switch (cdb[0]) {
-		case 0x4D: parse_log_sense(data, data_len);
-		case 0x25: parse_read_cap_10(data, data_len);
-		case 0x9E: parse_read_cap_16(data, data_len);
-		case 0x12: parse_inquiry_data(cdb, cdb_len, data, data_len);
-		case 0x5A: parse_mode_sense_10(data, data_len);
-		case 0x1A: parse_mode_sense_6(data, data_len);
-		case 0x1C: parse_receive_diagnostic_results(data, data_len);
-		case 0x37: parse_read_defect_data_10(data, data_len);
-		case 0xB7: parse_read_defect_data_12(data, data_len);
+		case 0x4D: parse_log_sense(data, data_len); break;
+		case 0x25: parse_read_cap_10(data, data_len); break;
+		case 0x9E: parse_read_cap_16(data, data_len); break;
+		case 0x12: parse_inquiry_data(cdb, cdb_len, data, data_len); break;
+		case 0x5A: parse_mode_sense_10(data, data_len); break;
+		case 0x1A: parse_mode_sense_6(data, data_len); break;
+		case 0x1C: parse_receive_diagnostic_results(data, data_len); break;
+		case 0x37: parse_read_defect_data_10(data, data_len); break;
+		case 0xB7: parse_read_defect_data_12(data, data_len); break;
 		default:
 				   printf("Unsupported CDB opcode %02X\n", cdb[0]);
 				   unparsed_data(data, data_len, data, data_len);
