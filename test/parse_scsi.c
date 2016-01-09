@@ -180,20 +180,6 @@ static void parse_log_sense_param(uint8_t page, uint8_t subpage, uint16_t param_
 	}
 }
 
-static void parse_log_sense_0_supported_log_pages(uint8_t *data, unsigned data_len)
-{
-	printf("Supported Log Pages:\n");
-	for (; data_len > 0; data_len--, data++)
-		printf("\t%02X\n", data[0] & 0x3F);
-}
-
-static void parse_log_sense_0_supported_log_subpages(uint8_t *data, unsigned data_len)
-{
-	printf("Supported Log Subpages:\n");
-	for (; data_len > 1; data_len-=2, data+=2)
-		printf("\t%02X %02X\n", data[0] & 0x3F, data[1]);
-}
-
 static int parse_log_sense(unsigned char *data, unsigned data_len)
 {
 	printf("Log Sense\n");
@@ -208,12 +194,19 @@ static int parse_log_sense(unsigned char *data, unsigned data_len)
 	printf("Log Sense Data Length: %u\n", log_sense_data_len(data));
 
 	if (log_sense_page_code(data) == 0) {
-		if (log_sense_subpage_format(data) == 0)
-			parse_log_sense_0_supported_log_pages(log_sense_data(data),
-					safe_len(data, data_len, log_sense_data(data), log_sense_data_len(data)));
-		else
-			parse_log_sense_0_supported_log_subpages(log_sense_data(data),
-					safe_len(data, data_len, log_sense_data(data), log_sense_data_len(data)));
+		if (log_sense_subpage_format(data) == 0) {
+			printf("Supported Log Pages:\n");
+			uint8_t supported_page;
+			for_all_log_sense_pg_0_supported_pages(data, data_len, supported_page) {
+				printf("\t%02X\n", supported_page & 0x3F);
+			}
+		} else {
+			printf("Supported Log Subpages:\n");
+			uint8_t supported_page, supported_subpage;
+			for_all_log_sense_pg_0_supported_subpages(data, data_len, supported_page, supported_subpage) {
+				printf("\t%02X %02X\n", supported_page & 0x3F, supported_subpage);
+			}
+		}
 	} else {
 		uint8_t *param;
 		for_all_log_sense_params(data, data_len, param) {

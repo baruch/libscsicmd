@@ -55,6 +55,11 @@ static inline uint8_t *log_sense_data(uint8_t *data)
 	return data + LOG_SENSE_MIN_LEN;
 }
 
+static inline uint8_t *log_sense_data_end(uint8_t *data, unsigned data_len)
+{
+	return data + safe_len(data, data_len, log_sense_data(data), log_sense_data_len(data));
+}
+
 static inline bool log_sense_is_valid(unsigned data_len)
 {
 	if (data_len < LOG_SENSE_MIN_LEN)
@@ -133,6 +138,14 @@ static inline bool log_sense_param_is_valid(uint8_t *data, unsigned data_len, ui
 	for (param = log_sense_data(data); \
 		 log_sense_param_is_valid(data, data_len, param); \
 		 param = param + LOG_SENSE_MIN_PARAM_LEN + log_sense_param_len(param))
+
+#define for_all_log_sense_pg_0_supported_pages(data, data_len, supported_page) \
+	uint8_t *__tmp; \
+	for (__tmp = log_sense_data(data), supported_page = __tmp[0]; __tmp < log_sense_data_end(data, data_len); __tmp++, supported_page = __tmp[0])
+
+#define for_all_log_sense_pg_0_supported_subpages(data, data_len, supported_page, supported_subpage) \
+	uint8_t *__tmp; \
+	for (__tmp = log_sense_data(data), supported_page = __tmp[0], supported_subpage = __tmp[1]; __tmp + 1 < log_sense_data_end(data, data_len); __tmp+=2, supported_page = __tmp[0], supported_subpage = __tmp[1])
 
 bool log_sense_page_informational_exceptions(uint8_t *page, unsigned page_len, uint8_t *asc, uint8_t *ascq, uint8_t *temperature);
 
