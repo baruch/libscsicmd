@@ -192,24 +192,28 @@ static int parse_log_sense(unsigned char *data, unsigned data_len)
 		return 1;
 	}
 	printf("Log Sense Page Code: 0x%02x\n", log_sense_page_code(data));
-	printf("Log Sense Subpage: 0x%02x\n", log_sense_subpage_code(data));
 	printf("Log Sense Subpage format: %s\n", yes_no(log_sense_subpage_format(data)));
+	if (log_sense_subpage_format(data))
+		printf("Log Sense Subpage: 0x%02x\n", log_sense_subpage_code(data));
 	printf("Log Sense Data Saved: %s\n", yes_no(log_sense_data_saved(data)));
 	printf("Log Sense Data Length: %u\n", log_sense_data_len(data));
 
 	if (log_sense_page_code(data) == 0) {
-		if (log_sense_subpage_format(data) == 0) {
+		if (!log_sense_subpage_format(data)) {
 			printf("Supported Log Pages:\n");
 			uint8_t supported_page;
 			for_all_log_sense_pg_0_supported_pages(data, data_len, supported_page) {
 				printf("\t%02X\n", supported_page & 0x3F);
 			}
-		} else {
+		} else if (log_sense_subpage_code(data) == 0xFF) {
 			printf("Supported Log Subpages:\n");
 			uint8_t supported_page, supported_subpage;
 			for_all_log_sense_pg_0_supported_subpages(data, data_len, supported_page, supported_subpage) {
 				printf("\t%02X %02X\n", supported_page & 0x3F, supported_subpage);
 			}
+		} else {
+			printf("Unknown supported log page combination");
+			unparsed_data(log_sense_data(data), log_sense_data_len(data), data, data_len);
 		}
 	} else {
 		uint8_t *param;
