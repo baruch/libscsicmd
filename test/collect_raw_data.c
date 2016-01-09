@@ -15,6 +15,8 @@
  */
 
 #include "scsicmd.h"
+#include "ata.h"
+
 #include "main.h"
 #include "sense_dump.h"
 #include "scsicmd_utils.h"
@@ -30,6 +32,8 @@
 #include <scsi/sg.h>
 #include <inttypes.h>
 #include <ctype.h>
+
+static bool is_ata;
 
 static void hex_dump(uint8_t *data, uint16_t len)
 {
@@ -55,6 +59,23 @@ static void emit_data_csv(uint8_t *cdb, uint8_t cdb_len, uint8_t *sense, uint8_t
 	putchar('\n');
 }
 
+static void simple_command(int fd, uint8_t *cdb, unsigned cdb_len, uint8_t *buf, unsigned buf_len)
+{
+	memset(buf, 0, buf_len);
+
+	bool ret = submit_cmd(fd, cdb, cdb_len, buf, buf_len, SG_DXFER_FROM_DEV);
+	if (!ret) {
+		printf("Failed to submit command,\n");
+		return;
+	}
+
+	unsigned char *sense = NULL;
+	unsigned sense_len = 0;
+	ret = read_response_buf(fd, &sense, &sense_len, &buf_len);
+
+	emit_data_csv(cdb, cdb_len, sense, sense_len, buf, buf_len);
+}
+
 static void do_simple_inquiry(int fd)
 {
 	unsigned char cdb[32];
@@ -75,6 +96,17 @@ static void do_simple_inquiry(int fd)
 	ret = read_response_buf(fd, &sense, &sense_len, &buf_len);
 
 	emit_data_csv(cdb, cdb_len, sense, sense_len, buf, buf_len);
+
+	int device_type;
+	scsi_vendor_t vendor;
+	scsi_model_t model;
+	scsi_fw_revision_t rev;
+	scsi_serial_t serial;
+	if (parse_inquiry(buf, sizeof(buf), &device_type, vendor, model, rev, serial) &&
+		strncmp(vendor, "ATA", 3) == 0)
+	{
+		is_ata = true;
+	}
 } 
 
 static void dump_evpd(int fd, uint8_t evpd_page)
@@ -83,20 +115,7 @@ static void dump_evpd(int fd, uint8_t evpd_page)
 	unsigned char buf[512];
 	unsigned cdb_len = cdb_inquiry(cdb, true, evpd_page, sizeof(buf));
 
-	memset(buf, 0, sizeof(buf));
-
-	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
-	if (!ret) {
-		printf("Failed to submit command,\n");
-		return;
-	}
-
-	unsigned char *sense = NULL;
-	unsigned sense_len = 0;
-	unsigned buf_len = 0;
-	ret = read_response_buf(fd, &sense, &sense_len, &buf_len);
-
-	emit_data_csv(cdb, cdb_len, sense, sense_len, buf, buf_len);
+	simple_command(fd, cdb, cdb_len, buf, sizeof(buf));
 }
 
 static void do_extended_inquiry(int fd)
@@ -134,20 +153,7 @@ static void dump_log_sense(int fd, uint8_t page, uint8_t subpage)
 	unsigned char buf[16*1024];
 	unsigned cdb_len = cdb_log_sense(cdb, page, subpage, sizeof(buf));
 
-	memset(buf, 0, sizeof(buf));
-
-	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
-	if (!ret) {
-		fprintf(stderr, "Failed to submit command\n");
-		return;
-	}
-
-	unsigned char *sense = NULL;
-	unsigned sense_len = 0;
-	unsigned buf_len = 0;
-	ret = read_response_buf(fd, &sense, &sense_len, &buf_len);
-
-	emit_data_csv(cdb, cdb_len, sense, sense_len, buf, buf_len);
+	simple_command(fd, cdb, cdb_len, buf, sizeof(buf));
 }
 
 static void do_log_sense(int fd)
@@ -242,18 +248,7 @@ static void do_mode_sense_10_type(int fd, bool long_lba, bool disable_block_desc
 	unsigned char buf[4096];
 	unsigned cdb_len = cdb_mode_sense_10(cdb, long_lba, disable_block_desc, page_control, 0x3F, 0xFF, sizeof(buf));
 
-	memset(buf, 0, sizeof(buf));
-	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
-	if (!ret) {
-		fprintf(stderr, "Failed to submit command\n");
-		return;
-	}
-
-	unsigned char *sense = NULL;
-	unsigned sense_len = 0;
-	unsigned buf_len = 0;
-	ret = read_response_buf(fd, &sense, &sense_len, &buf_len);
-	emit_data_csv(cdb, cdb_len, sense, sense_len, buf, buf_len);
+	simple_command(fd, cdb, cdb_len, buf, sizeof(buf));
 }
 
 static void do_mode_sense_10(int fd)
@@ -285,18 +280,7 @@ static void do_mode_sense_6_type(int fd, bool disable_block_desc, page_control_e
 	unsigned char buf[255];
 	unsigned cdb_len = cdb_mode_sense_6(cdb, disable_block_desc, page_control, 0x3F, 0xFF, sizeof(buf));
 
-	memset(buf, 0, sizeof(buf));
-	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
-	if (!ret) {
-		fprintf(stderr, "Failed to submit command\n");
-		return;
-	}
-
-	unsigned char *sense = NULL;
-	unsigned sense_len = 0;
-	unsigned buf_len = 0;
-	ret = read_response_buf(fd, &sense, &sense_len, &buf_len);
-	emit_data_csv(cdb, cdb_len, sense, sense_len, buf, buf_len);
+	simple_command(fd, cdb, cdb_len, buf, sizeof(buf));
 }
 
 static void do_mode_sense_6(int fd)
@@ -324,20 +308,7 @@ static void dump_rcv_diag_page(int fd, uint8_t page)
 	unsigned char buf[16*1024];
 	unsigned cdb_len = cdb_receive_diagnostics(cdb, true, page, sizeof(buf));
 
-	memset(buf, 0, sizeof(buf));
-
-	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
-	if (!ret) {
-		fprintf(stderr, "Failed to submit command\n");
-		return;
-	}
-
-	unsigned char *sense = NULL;
-	unsigned sense_len = 0;
-	unsigned buf_len = 0;
-	ret = read_response_buf(fd, &sense, &sense_len, &buf_len);
-
-	emit_data_csv(cdb, cdb_len, sense, sense_len, buf, buf_len);
+	simple_command(fd, cdb, cdb_len, buf, sizeof(buf));
 }
 
 static void do_receive_diagnostic(int fd)
@@ -389,20 +360,7 @@ static void do_read_capacity_10(int fd)
 	unsigned char buf[8];
 	unsigned cdb_len = cdb_read_capacity_10(cdb);
 
-	memset(buf, 0, sizeof(buf));
-
-	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
-	if (!ret) {
-		fprintf(stderr, "Failed to submit command\n");
-		return;
-	}
-
-	unsigned char *sense = NULL;
-	unsigned sense_len = 0;
-	unsigned buf_len = 0;
-	ret = read_response_buf(fd, &sense, &sense_len, &buf_len);
-
-	emit_data_csv(cdb, cdb_len, sense, sense_len, buf, buf_len);
+	simple_command(fd, cdb, cdb_len, buf, sizeof(buf));
 }
 
 static void do_read_capacity_16(int fd)
@@ -411,20 +369,7 @@ static void do_read_capacity_16(int fd)
 	unsigned char buf[512];
 	unsigned cdb_len = cdb_read_capacity_16(cdb, sizeof(buf));
 
-	memset(buf, 0, sizeof(buf));
-
-	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
-	if (!ret) {
-		fprintf(stderr, "Failed to submit command\n");
-		return;
-	}
-
-	unsigned char *sense = NULL;
-	unsigned sense_len = 0;
-	unsigned buf_len = 0;
-	ret = read_response_buf(fd, &sense, &sense_len, &buf_len);
-
-	emit_data_csv(cdb, cdb_len, sense, sense_len, buf, buf_len);
+	simple_command(fd, cdb, cdb_len, buf, sizeof(buf));
 }
 
 static void do_read_capacity(int fd)
@@ -439,20 +384,7 @@ static void do_read_defect_data_10(int fd, bool plist, bool glist, uint8_t forma
 	unsigned char buf[512];
 	unsigned cdb_len = cdb_read_defect_data_10(cdb, plist, glist, format, count_only ? 8 : sizeof(buf));
 
-	memset(buf, 0, sizeof(buf));
-
-	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
-	if (!ret) {
-		fprintf(stderr, "Failed to submit command\n");
-		return;
-	}
-
-	unsigned char *sense = NULL;
-	unsigned sense_len = 0;
-	unsigned buf_len = 0;
-	ret = read_response_buf(fd, &sense, &sense_len, &buf_len);
-
-	emit_data_csv(cdb, cdb_len, sense, sense_len, buf, buf_len);
+	simple_command(fd, cdb, cdb_len, buf, sizeof(buf));
 }
 
 static void do_read_defect_data_10_all(int fd, uint8_t format)
@@ -469,20 +401,7 @@ static void do_read_defect_data_12(int fd, bool plist, bool glist, uint8_t forma
 	unsigned char buf[512];
 	unsigned cdb_len = cdb_read_defect_data_12(cdb, plist, glist, format, count_only ? 8 : sizeof(buf));
 
-	memset(buf, 0, sizeof(buf));
-
-	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
-	if (!ret) {
-		fprintf(stderr, "Failed to submit command\n");
-		return;
-	}
-
-	unsigned char *sense = NULL;
-	unsigned sense_len = 0;
-	unsigned buf_len = 0;
-	ret = read_response_buf(fd, &sense, &sense_len, &buf_len);
-
-	emit_data_csv(cdb, cdb_len, sense, sense_len, buf, buf_len);
+	simple_command(fd, cdb, cdb_len, buf, sizeof(buf));
 }
 
 static void do_read_defect_data_12_all(int fd, uint8_t format)
@@ -504,9 +423,66 @@ static void do_read_defect_data(int fd)
 		do_read_defect_data_12_all(fd, format);
 }
 
+static void do_ata_identify(int fd)
+{
+	uint8_t cdb[32];
+	int cdb_len;
+	uint8_t buf[512];
+
+	cdb_len = cdb_ata_identify(cdb);
+
+	simple_command(fd, cdb, cdb_len, buf, sizeof(buf));
+}
+
+static void do_ata_identify_16(int fd)
+{
+	uint8_t cdb[32];
+	int cdb_len;
+	uint8_t buf[512];
+
+	cdb_len = cdb_ata_identify_16(cdb);
+
+	simple_command(fd, cdb, cdb_len, buf, sizeof(buf));
+}
+
+static void do_ata_smart_return_status(int fd)
+{
+	uint8_t cdb[32];
+	int cdb_len;
+	uint8_t buf[512];
+
+	cdb_len = cdb_ata_smart_return_status(cdb);
+
+	simple_command(fd, cdb, cdb_len, buf, sizeof(buf));
+}
+
+static void do_ata_smart_read_data(int fd)
+{
+	uint8_t cdb[32];
+	int cdb_len;
+	uint8_t buf[512];
+
+	cdb_len = cdb_ata_smart_read_data(cdb);
+
+	simple_command(fd, cdb, cdb_len, buf, sizeof(buf));
+}
+
+static void do_ata_smart_read_threshold(int fd)
+{
+	uint8_t cdb[32];
+	int cdb_len;
+	uint8_t buf[512];
+
+	cdb_len = cdb_ata_smart_read_threshold(cdb);
+
+	simple_command(fd, cdb, cdb_len, buf, sizeof(buf));
+}
+
 void do_command(int fd)
 {
 	debug = 0;
+	is_ata = false;
+
 	printf("msg,cdb,sense,data\n");
 	do_read_capacity(fd);
 	do_simple_inquiry(fd);
@@ -515,4 +491,12 @@ void do_command(int fd)
 	do_mode_sense(fd);
 	do_receive_diagnostic(fd);
 	do_read_defect_data(fd);
+
+	if (is_ata) {
+		do_ata_identify(fd);
+		do_ata_identify_16(fd);
+		do_ata_smart_return_status(fd);
+		do_ata_smart_read_data(fd);
+		do_ata_smart_read_threshold(fd);
+	}
 }
