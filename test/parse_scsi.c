@@ -13,6 +13,10 @@
 #include "scsicmd.h"
 #include "sense_dump.h"
 
+#ifndef __AFL_LOOP
+#define __AFL_LOOP(count) 1
+#endif
+
 static char *csvtok_last;
 
 static void csvtok_reset(void)
@@ -722,6 +726,7 @@ int main(int argc, char **argv)
 			sense_src = csvtok(NULL);
 			data_src = csvtok(NULL);
 			process_data(cdb_src, sense_src, data_src);
+			printf("=================================================================================\n");
 		}
 	} else {
 		cdb_src = argv[1];
