@@ -15,12 +15,17 @@ def emit_func_string(name, field, params):
 	print('printf("%%-40s: %%s\\n", "%(field)s", outbuf);' % bit_params)
 	print('}')
 
+def emit_func_bits(name, field, params):
+	bit_params = dict(name=name, field=field, word_start=int(params[0]))
+	print('printf("%%-40s: %%u\\n", "%(field)s", ata_get_%(name)s_%(field)s(buf));' % bit_params)
+
 def emit_func_longword(name, field, params):
 	bit_params = dict(name=name, field=field, word_start=int(params))
 	print('printf("%%-40s: %%u\\n", "%(field)s", ata_get_%(name)s_%(field)s(buf));' % bit_params)
 
 kinds = {
-	'bit': emit_func_bit,
+    'bit': emit_func_bit,
+    'bits': emit_func_bits,
 	'string': emit_func_string,
 	'longword': emit_func_longword,
 }
