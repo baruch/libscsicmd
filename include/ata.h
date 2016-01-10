@@ -23,6 +23,7 @@
 
 typedef uint16_t ata_word_t;
 typedef uint32_t ata_longword_t;
+typedef uint64_t ata_qword_t;
 
 typedef enum passthrough_protocol_e {
 	PT_PROTO_HARDWARE_RESET = 0,
@@ -106,6 +107,14 @@ static inline ata_longword_t ata_get_longword(const unsigned char *buf, int star
 	ata_longword_t low = ata_get_word(buf, start_word);
 	ata_longword_t longword = high << 16 | low;
 	return longword;
+}
+
+static inline ata_qword_t ata_get_qword(const unsigned char *buf, int start_word)
+{
+	ata_qword_t low = ata_get_longword(buf, start_word);
+	ata_qword_t high = ata_get_longword(buf, start_word+2);
+	ata_qword_t qword = high << 32 | low;
+	return qword;
 }
 
 bool ata_inquiry_checksum_verify(const char *buf, int buf_len);

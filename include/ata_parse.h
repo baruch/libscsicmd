@@ -37,6 +37,10 @@ static inline bool ata_get_ata_identify_rzat_supported(const unsigned char *buf)
 	return val & (1 << 5);
 }
 
+static inline ata_qword_t ata_get_ata_identify_extended_num_user_addressable_sectors(const unsigned char *buf) {
+	return ata_get_qword(buf, 230);
+}
+
 static inline bool ata_get_ata_identify_wwn_64bit_supported(const unsigned char *buf) {
 	ata_word_t val = ata_get_word(buf, 84);
 	return val & (1 << 8);

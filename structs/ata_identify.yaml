@@ -220,4 +220,8 @@ ata_identify:
         string: [170, 173]
     current_media_serial:
         string: [176, 205]
+
+    extended_num_user_addressable_sectors:
+        qword: 230
+
 # vim:set et ts=4 sw=4:

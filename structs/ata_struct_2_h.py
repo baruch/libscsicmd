@@ -33,11 +33,19 @@ def emit_func_longword(name, field, params):
 }
 """ % bit_params)
 
+def emit_func_qword(name, field, params):
+	bit_params = dict(name=name, field=field, word_start=int(params))
+	print("""static inline ata_qword_t ata_get_%(name)s_%(field)s(const unsigned char *buf) {
+	return ata_get_qword(buf, %(word_start)d);
+}
+""" % bit_params)
+
 kinds = {
 	'bit': emit_func_bit,
     'bits': emit_func_bits,
 	'string': emit_func_string,
 	'longword': emit_func_longword,
+    'qword': emit_func_qword,
 }
 
 def emit_header_single(name, struct):
