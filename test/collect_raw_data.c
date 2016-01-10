@@ -22,6 +22,7 @@
 #include "scsicmd_utils.h"
 #include "parse_extended_inquiry.h"
 #include "parse_receive_diagnostics.h"
+#include "parse_log_sense.h"
 #include <stdio.h>
 #include <memory.h>
 #include <errno.h>
@@ -59,14 +60,14 @@ static void emit_data_csv(uint8_t *cdb, uint8_t cdb_len, uint8_t *sense, uint8_t
 	putchar('\n');
 }
 
-static void simple_command(int fd, uint8_t *cdb, unsigned cdb_len, uint8_t *buf, unsigned buf_len)
+static int simple_command(int fd, uint8_t *cdb, unsigned cdb_len, uint8_t *buf, unsigned buf_len)
 {
 	memset(buf, 0, buf_len);
 
 	bool ret = submit_cmd(fd, cdb, cdb_len, buf, buf_len, SG_DXFER_FROM_DEV);
 	if (!ret) {
 		printf("Failed to submit command,\n");
-		return;
+		return -1;
 	}
 
 	unsigned char *sense = NULL;
@@ -74,6 +75,10 @@ static void simple_command(int fd, uint8_t *cdb, unsigned cdb_len, uint8_t *buf,
 	ret = read_response_buf(fd, &sense, &sense_len, &buf_len);
 
 	emit_data_csv(cdb, cdb_len, sense, sense_len, buf, buf_len);
+
+	if (sense_len > 0)
+		return -1;
+	return buf_len;
 }
 
 static void do_simple_inquiry(int fd)
@@ -81,28 +86,16 @@ static void do_simple_inquiry(int fd)
 	unsigned char cdb[32];
 	unsigned char buf[512];
 	unsigned cdb_len = cdb_inquiry_simple(cdb, sizeof(buf));
+	int buf_len;
 
-	memset(buf, 0, sizeof(buf));
-
-	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
-	if (!ret) {
-		printf("Failed to submit command,\n");
-		return;
-	}
-
-	unsigned char *sense = NULL;
-	unsigned sense_len = 0;
-	unsigned buf_len = 0;
-	ret = read_response_buf(fd, &sense, &sense_len, &buf_len);
-
-	emit_data_csv(cdb, cdb_len, sense, sense_len, buf, buf_len);
+	buf_len = simple_command(fd, cdb, cdb_len, buf, sizeof(buf));
 
 	int device_type;
 	scsi_vendor_t vendor;
 	scsi_model_t model;
 	scsi_fw_revision_t rev;
 	scsi_serial_t serial;
-	if (parse_inquiry(buf, sizeof(buf), &device_type, vendor, model, rev, serial) &&
+	if (parse_inquiry(buf, buf_len, &device_type, vendor, model, rev, serial) &&
 		strncmp(vendor, "ATA", 3) == 0)
 	{
 		is_ata = true;
@@ -123,23 +116,11 @@ static void do_extended_inquiry(int fd)
 	unsigned char cdb[32];
 	unsigned char buf[512];
 	unsigned cdb_len = cdb_inquiry(cdb, true, 0, sizeof(buf));
+	int buf_len;
 
-	memset(buf, 0, sizeof(buf));
+	buf_len = simple_command(fd, cdb, cdb_len, buf, sizeof(buf));
 
-	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
-	if (!ret) {
-		printf("Failed to submit command,\n");
-		return;
-	}
-
-	unsigned char *sense = NULL;
-	unsigned sense_len = 0;
-	unsigned buf_len = 0;
-	ret = read_response_buf(fd, &sense, &sense_len, &buf_len);
-
-	emit_data_csv(cdb, cdb_len, sense, sense_len, buf, buf_len);
-
-	if (!sense) {
+	if (buf_len > 0 && evpd_is_valid(buf, buf_len)) {
 		uint16_t max_page_idx = evpd_page_len(buf) + 4;
 		uint16_t i;
 		for (i = 4; i < max_page_idx; i++)
@@ -161,29 +142,17 @@ static void do_log_sense(int fd)
 	unsigned char cdb[32];
 	unsigned char buf[16*1024];
 	unsigned cdb_len = cdb_log_sense(cdb, 0, 0, sizeof(buf));
+	int buf_len;
 
-	memset(buf, 0, sizeof(buf));
+	buf_len = simple_command(fd, cdb, cdb_len, buf, sizeof(buf));
 
-	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
-	if (!ret) {
-		fprintf(stderr, "Failed to submit command\n");
-		return;
-	}
-
-	unsigned char *sense = NULL;
-	unsigned sense_len = 0;
-	unsigned buf_len = 0;
-	ret = read_response_buf(fd, &sense, &sense_len, &buf_len);
-
-	emit_data_csv(cdb, cdb_len, sense, sense_len, buf, buf_len);
-
-	if (sense) {
+	if (buf_len < 0) {
 		printf("error while reading log sense list, nothing to show\n");
 		return;
 	}
 
-	if (buf_len < 4) {
-		printf("log sense list must have at least 4 bytes\n");
+	if (!log_sense_is_valid(buf, buf_len)) {
+		printf("log sense page is invalid\n");
 		return;
 	}
 
@@ -199,28 +168,14 @@ static void do_log_sense(int fd)
 	}
 
 	cdb_len = cdb_log_sense(cdb, 0, 0xff, sizeof(buf));
+	buf_len = simple_command(fd, cdb, cdb_len, buf, sizeof(buf));
 
-	memset(buf, 0, sizeof(buf));
-
-	ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
-	if (!ret) {
-		fprintf(stderr, "Failed to submit command\n");
-		return;
-	}
-
-	sense = NULL;
-	sense_len = 0;
-	buf_len = 0;
-	ret = read_response_buf(fd, &sense, &sense_len, &buf_len);
-
-	emit_data_csv(cdb, cdb_len, sense, sense_len, buf, buf_len);
-
-	if (sense) {
+	if (buf_len < 0) {
 		printf("error while reading list of log subpages, nothing to show\n");
 		return;
 	}
 
-	if (buf_len < 4) {
+	if (!log_sense_is_valid(buf, buf_len)) {
 		printf("log sense list must have at least 4 bytes\n");
 		return;
 	}
@@ -316,28 +271,16 @@ static void do_receive_diagnostic(int fd)
 	unsigned char cdb[32];
 	unsigned char buf[16*1024];
 	unsigned cdb_len = cdb_receive_diagnostics(cdb, true, 0, sizeof(buf));
+	int buf_len;
 
-	memset(buf, 0, sizeof(buf));
+	buf_len = simple_command(fd, cdb, cdb_len, buf, sizeof(buf));
 
-	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
-	if (!ret) {
-		fprintf(stderr, "Failed to submit command\n");
-		return;
-	}
-
-	unsigned char *sense = NULL;
-	unsigned sense_len = 0;
-	unsigned buf_len = 0;
-	ret = read_response_buf(fd, &sense, &sense_len, &buf_len);
-
-	emit_data_csv(cdb, cdb_len, sense, sense_len, buf, buf_len);
-
-	if (sense) {
+	if (buf_len < 0) {
 		printf("error while reading response buffer, nothing to show\n");
 		return;
 	}
 
-	if (buf_len < RECV_DIAG_MIN_LEN) {
+	if (recv_diag_is_valid(buf, buf_len)) {
 		printf("receive diagnostics list must have at least 4 bytes\n");
 		return;
 	}

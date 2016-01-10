@@ -45,7 +45,7 @@ static inline uint8_t log_sense_subpage_code(uint8_t *data)
 	return data[1];
 }
 
-static inline uint16_t log_sense_data_len(uint8_t *data)
+static inline unsigned log_sense_data_len(uint8_t *data)
 {
 	return get_uint16(data, 2);
 }
@@ -60,9 +60,13 @@ static inline uint8_t *log_sense_data_end(uint8_t *data, unsigned data_len)
 	return data + safe_len(data, data_len, log_sense_data(data), log_sense_data_len(data));
 }
 
-static inline bool log_sense_is_valid(unsigned data_len)
+static inline bool log_sense_is_valid(uint8_t *data, unsigned data_len)
 {
 	if (data_len < LOG_SENSE_MIN_LEN)
+		return false;
+	if (!log_sense_subpage_format(data) && log_sense_subpage_code(data) != 0)
+		return false;
+	if (log_sense_data_len(data) + LOG_SENSE_MIN_LEN < data_len)
 		return false;
 	return true;
 }
