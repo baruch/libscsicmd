@@ -439,7 +439,7 @@ static void do_ata_read_log_ext(int fd)
 	do_ata_read_log_ext_page(fd, buf, sizeof(buf), 0, 0);
 
 	for (log_addr = 1; log_addr < sizeof(buf)/2; log_addr++) {
-		unsigned num_pages = ata_get_word((const char*)buf, log_addr);
+		unsigned num_pages = ata_get_word(buf, log_addr);
 		if (num_pages) {
 			unsigned page;
 			for (page = 0; page < num_pages; page++) {

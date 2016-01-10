@@ -76,7 +76,7 @@ bool ata_status_from_scsi_sense(unsigned char *sense, int sense_len, ata_status_
 
 uint16_t ata_get_ata_smart_read_data_version(const unsigned char *buf)
 {
-	return ata_get_word((const char *)buf, 0);
+	return ata_get_word(buf, 0);
 }
 
 int ata_parse_ata_smart_read_data(const unsigned char *buf, ata_smart_attr_t *attrs, int max_attrs)
