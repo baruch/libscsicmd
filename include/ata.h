@@ -47,12 +47,12 @@ typedef enum ata_passthrough_len_spec_e {
 	ATA_PT_LEN_SPEC_TPSIU        = 3,
 } ata_passthrough_len_spec_e;
 
-static inline ata_word_t ata_get_word(const char *buf, int word)
+static inline ata_word_t ata_get_word(const unsigned char *buf, int word)
 {
 	return (uint16_t)(buf[word*2+1])<<8 | buf[word*2];
 }
 
-static inline uint16_t ata_get_bits(const char *buf, int word, int start_bit, int end_bit)
+static inline uint16_t ata_get_bits(const unsigned char *buf, int word, int start_bit, int end_bit)
 {
 	uint16_t val = ata_get_word(buf, word);
 	uint16_t shift = start_bit;
@@ -80,12 +80,12 @@ static inline uint16_t ata_get_bits(const char *buf, int word, int start_bit, in
 	return (val >> shift) & mask;
 }
 
-static inline bool ata_get_bit(char *buf, int word, int bit)
+static inline bool ata_get_bit(const unsigned char *buf, int word, int bit)
 {
 	return ata_get_bits(buf, word, bit, bit);
 }
 
-static inline char *ata_get_string(const char *buf, int word_start, int word_end, char *str)
+static inline char *ata_get_string(const unsigned char *buf, int word_start, int word_end, char *str)
 {
 	int word;
 	int i;
@@ -100,7 +100,7 @@ static inline char *ata_get_string(const char *buf, int word_start, int word_end
 	return str;
 }
 
-static inline ata_longword_t ata_get_longword(const char *buf, int start_word)
+static inline ata_longword_t ata_get_longword(const unsigned char *buf, int start_word)
 {
 	ata_longword_t high = ata_get_word(buf, start_word+1);
 	ata_longword_t low = ata_get_word(buf, start_word);

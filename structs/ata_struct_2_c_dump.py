@@ -45,7 +45,7 @@ def emit_header_single(name, struct):
 
 def emit_header(structs):
 	for name, struct in list(structs.items()):
-		print('void dump_%s(const char *buf)' % name)
+		print('void dump_%s(const unsigned char *buf)' % name)
 		print('{')
 		emit_header_single(name, struct)
 		print('}')
