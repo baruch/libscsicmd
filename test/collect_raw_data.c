@@ -421,12 +421,12 @@ static void do_ata_smart_read_threshold(int fd)
 	simple_command(fd, cdb, cdb_len, buf, sizeof(buf));
 }
 
-static int do_ata_read_log_ext_page(int fd, uint8_t *buf, unsigned buf_sz, int log_addr)
+static int do_ata_read_log_ext_page(int fd, uint8_t *buf, unsigned buf_sz, unsigned log_addr, unsigned page)
 {
 	uint8_t cdb[32];
 	int cdb_len;
 
-	cdb_len = cdb_ata_read_log_ext(cdb, 1, 0, log_addr);
+	cdb_len = cdb_ata_read_log_ext(cdb, 1, page, log_addr);
 	return simple_command(fd, cdb, cdb_len, buf, buf_sz);
 }
 
@@ -434,16 +434,20 @@ static void do_ata_read_log_ext(int fd)
 {
 	uint8_t  __attribute__((aligned(512))) buf[512];
 	uint8_t  __attribute__((aligned(512))) buf_data[512];
-	unsigned idx;
-	int log_addr;
+	unsigned log_addr;
 
-	do_ata_read_log_ext_page(fd, buf, sizeof(buf), 0);
+	do_ata_read_log_ext_page(fd, buf, sizeof(buf), 0, 0);
 
-	for (idx = 2, log_addr = 1; idx < sizeof(buf); idx += 2, log_addr++) {
-		unsigned num_pages = get_uint16(buf, idx);
+	for (log_addr = 1; log_addr < sizeof(buf)/2; log_addr++) {
+		unsigned num_pages = ata_get_word((const char*)buf, log_addr);
 		if (num_pages) {
-			printf("READ LOG EXT page %02X num pages %u\n", log_addr, num_pages);
-			do_ata_read_log_ext_page(fd, buf_data, sizeof(buf_data), log_addr);
+			unsigned page;
+			for (page = 0; page < num_pages; page++) {
+				printf("READ LOG EXT log addr %02X page %u/%u\n", log_addr, page, num_pages);
+				int ret = do_ata_read_log_ext_page(fd, buf_data, sizeof(buf_data), log_addr, page);
+				if (ret < 0)
+					break;
+			}
 		}
 	}
 }
