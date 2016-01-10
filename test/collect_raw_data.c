@@ -433,11 +433,18 @@ static int do_ata_read_log_ext_page(int fd, uint8_t *buf, unsigned buf_sz, int l
 static void do_ata_read_log_ext(int fd)
 {
 	uint8_t  __attribute__((aligned(512))) buf[512];
+	uint8_t  __attribute__((aligned(512))) buf_data[512];
+	unsigned idx;
 	int log_addr;
 
-	for (log_addr = 0; log_addr <= 0xFF; log_addr++) {
-		printf("READ LOG EXT page %02X\n", log_addr);
-		do_ata_read_log_ext_page(fd, buf, sizeof(buf), log_addr);
+	do_ata_read_log_ext_page(fd, buf, sizeof(buf), 0);
+
+	for (idx = 2, log_addr = 1; idx < sizeof(buf); idx += 2, log_addr++) {
+		unsigned num_pages = get_uint16(buf, idx);
+		if (num_pages) {
+			printf("READ LOG EXT page %02X num pages %u\n", log_addr, num_pages);
+			do_ata_read_log_ext_page(fd, buf_data, sizeof(buf_data), log_addr);
+		}
 	}
 }
 
