@@ -421,17 +421,23 @@ static void do_ata_smart_read_threshold(int fd)
 	simple_command(fd, cdb, cdb_len, buf, sizeof(buf));
 }
 
-static void do_ata_read_log_ext(int fd)
+static int do_ata_read_log_ext_page(int fd, uint8_t *buf, unsigned buf_sz, int log_addr)
 {
 	uint8_t cdb[32];
 	int cdb_len;
+
+	cdb_len = cdb_ata_read_log_ext(cdb, 1, 0, log_addr);
+	return simple_command(fd, cdb, cdb_len, buf, buf_sz);
+}
+
+static void do_ata_read_log_ext(int fd)
+{
 	uint8_t  __attribute__((aligned(512))) buf[512];
 	int log_addr;
 
 	for (log_addr = 0; log_addr <= 0xFF; log_addr++) {
 		printf("READ LOG EXT page %02X\n", log_addr);
-		cdb_len = cdb_ata_read_log_ext(cdb, 1, 0, log_addr);
-		simple_command(fd, cdb, cdb_len, buf, sizeof(buf));
+		do_ata_read_log_ext_page(fd, buf, sizeof(buf), log_addr);
 	}
 }
 
