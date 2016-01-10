@@ -206,6 +206,12 @@ static inline int cdb_ata_check_power_mode(unsigned char *cdb)
 	return cdb_ata_passthrough_12(cdb, 0xE5, 0, 0, 0, PT_PROTO_NON_DATA, true, 1);
 }
 
+static inline int cdb_ata_read_log_ext(unsigned char *cdb, uint16_t block_count, uint16_t page_number, uint8_t log_address)
+{
+	uint64_t lba = ((page_number & 0xFF00) << 24) | ((page_number & 0xFF) << 8) | log_address;
+	return cdb_ata_passthrough_16(cdb, 0x2F, 0, lba, block_count, PT_PROTO_PIO_DATA_IN, true, false, 0);
+}
+
 /* Parse ATA SMART READ DATA results */
 #define MAX_SMART_ATTRS 30
 typedef struct ata_smart_attr {
