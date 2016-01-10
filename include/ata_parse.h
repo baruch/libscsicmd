@@ -76,6 +76,10 @@ static inline bool ata_get_ata_identify_sct_command_transport_supported(const ch
 	return val & (1 << 0);
 }
 
+static inline ata_longword_t ata_get_ata_identify_wwn_high(const char *buf) {
+	return ata_get_longword(buf, 108);
+}
+
 static inline bool ata_get_ata_identify_supports_sata_gen1_1_5gbps(const char *buf) {
 	ata_word_t val = ata_get_word(buf, 76);
 	return val & (1 << 1);
@@ -141,6 +145,11 @@ static inline bool ata_get_ata_identify_puis_supported(const char *buf) {
 	return val & (1 << 5);
 }
 
+static inline bool ata_get_ata_identify_supports_read_log_dma_ext_as_read_log_dma(const char *buf) {
+	ata_word_t val = ata_get_word(buf, 76);
+	return val & (1 << 15);
+}
+
 static inline void ata_get_ata_identify_serial_number(const char *buf, char *out) {
 	ata_get_string(buf, 10, 19, out);
 }
@@ -163,6 +172,10 @@ static inline bool ata_get_ata_identify_sata_in_order_data_delivery_enabled(cons
 static inline bool ata_get_ata_identify_major_version_acs_2(const char *buf) {
 	ata_word_t val = ata_get_word(buf, 80);
 	return val & (1 << 9);
+}
+
+static inline void ata_get_ata_identify_additional_product_identifier(const char *buf, char *out) {
+	ata_get_string(buf, 170, 173, out);
 }
 
 static inline bool ata_get_ata_identify_volatile_write_cache_supported(const char *buf) {
@@ -275,6 +288,11 @@ static inline bool ata_get_ata_identify_dma_supported(const char *buf) {
 	return val & (1 << 8);
 }
 
+static inline unsigned ata_get_ata_identify_rotational_rate(const char *buf) {
+	ata_word_t val = ata_get_word(buf, 216);
+	return (val >> 0) & ((1<<(15 - 0 + 1)) - 1);
+}
+
 static inline bool ata_get_ata_identify_not_ata_device(const char *buf) {
 	ata_word_t val = ata_get_word(buf, 0);
 	return val & (1 << 15);
@@ -315,6 +333,11 @@ static inline bool ata_get_ata_identify_fields_valid_word_88(const char *buf) {
 	return val & (1 << 2);
 }
 
+static inline bool ata_get_ata_identify_packet_feature_set_supported(const char *buf) {
+	ata_word_t val = ata_get_word(buf, 82);
+	return val & (1 << 4);
+}
+
 static inline bool ata_get_ata_identify_nop_supported(const char *buf) {
 	ata_word_t val = ata_get_word(buf, 82);
 	return val & (1 << 14);
@@ -350,9 +373,8 @@ static inline bool ata_get_ata_identify_sata_automatic_partial_to_slumber_transi
 	return val & (1 << 7);
 }
 
-static inline bool ata_get_ata_identify_packet_feature_set_supported(const char *buf) {
-	ata_word_t val = ata_get_word(buf, 82);
-	return val & (1 << 4);
+static inline void ata_get_ata_identify_current_media_serial(const char *buf, char *out) {
+	ata_get_string(buf, 176, 205, out);
 }
 
 static inline bool ata_get_ata_identify_major_version_ata_8_acs(const char *buf) {
@@ -360,9 +382,8 @@ static inline bool ata_get_ata_identify_major_version_ata_8_acs(const char *buf)
 	return val & (1 << 8);
 }
 
-static inline bool ata_get_ata_identify_supports_read_log_dma_ext_as_read_log_dma(const char *buf) {
-	ata_word_t val = ata_get_word(buf, 76);
-	return val & (1 << 15);
+static inline ata_longword_t ata_get_ata_identify_wwn_low(const char *buf) {
+	return ata_get_longword(buf, 110);
 }
 
 static inline bool ata_get_ata_identify_trusted_computing_supported(const char *buf) {

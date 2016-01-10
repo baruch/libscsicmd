@@ -208,4 +208,16 @@ ata_identify:
     sct_command_transport_supported:
         bit: [206, 0]
 
+    rotational_rate:
+        bits: [216, 0, 15]
+
+    wwn_high:
+        longword: 108
+    wwn_low:
+        longword: 110
+
+    additional_product_identifier:
+        string: [170, 173]
+    current_media_serial:
+        string: [176, 205]
 # vim:set et ts=4 sw=4:
