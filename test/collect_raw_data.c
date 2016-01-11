@@ -76,8 +76,13 @@ static int simple_command(int fd, uint8_t *cdb, unsigned cdb_len, uint8_t *buf, 
 
 	emit_data_csv(cdb, cdb_len, sense, sense_len, buf, buf_len);
 
-	if (sense_len > 0)
+	if (sense_len > 0) {
+		sense_info_t sense_info;
+		bool sense_parsed = scsi_parse_sense(sense, sense_len, &sense_info);
+		if (sense_parsed && sense_info.sense_key == SENSE_KEY_RECOVERED_ERROR)
+			return buf_len;
 		return -1;
+	}
 	return buf_len;
 }
 
