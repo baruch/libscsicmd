@@ -64,7 +64,7 @@ static int simple_command(int fd, uint8_t *cdb, unsigned cdb_len, uint8_t *buf, 
 {
 	memset(buf, 0, buf_len);
 
-	bool ret = submit_cmd(fd, cdb, cdb_len, buf, buf_len, SG_DXFER_FROM_DEV);
+	bool ret = submit_cmd(fd, cdb, cdb_len, buf, buf_len, buf_len ? SG_DXFER_FROM_DEV : SG_DXFER_NONE);
 	if (!ret) {
 		printf("Failed to submit command,\n");
 		return -1;
@@ -494,6 +494,16 @@ static void do_ata_smart_read_log(int fd)
 	}
 }
 
+static void do_ata_check_power_mode(int fd)
+{
+	uint8_t cdb[32];
+	int cdb_len;
+
+	printf("Check power mode\n");
+	cdb_len = cdb_ata_check_power_mode(cdb);
+	simple_command(fd, cdb, cdb_len, NULL, 0);
+}
+
 void do_command(int fd)
 {
 	debug = 0;
@@ -511,6 +521,7 @@ void do_command(int fd)
 	if (is_ata) {
 		do_ata_identify(fd);
 		do_ata_identify_16(fd);
+		do_ata_check_power_mode(fd);
 		do_ata_smart_return_status(fd);
 		do_ata_smart_read_data(fd);
 		do_ata_smart_read_threshold(fd);
