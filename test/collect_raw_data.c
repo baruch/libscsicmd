@@ -443,6 +443,10 @@ static void do_ata_read_log_ext(int fd)
 
 	do_ata_read_log_ext_page(fd, buf, sizeof(buf), 0, 0);
 
+	// Validate the page is valid
+	if (buf[0] != 1 || buf[1] != 0)
+		return;
+
 	for (log_addr = 1; log_addr < sizeof(buf)/2; log_addr++) {
 		unsigned num_pages = ata_get_word(buf, log_addr);
 		if (num_pages) {
@@ -474,6 +478,10 @@ static void do_ata_smart_read_log(int fd)
 
 	int ret = do_ata_smart_read_log_addr(fd, buf, sizeof(buf), 0, 1);
 	if (ret < (int)sizeof(buf))
+		return;
+
+	// Validate the page is valid
+	if (buf[0] != 1 || buf[1] != 0)
 		return;
 
 	for (log_addr = 1; log_addr < 255; log_addr++) {
