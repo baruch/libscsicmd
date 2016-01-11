@@ -204,6 +204,10 @@ static inline int cdb_ata_smart_read_data(unsigned char *cdb)
 	return cdb_ata_passthrough_12(cdb, 0xB0, 0xD0, 0xC24F<<8, 1, PT_PROTO_DMA, true, 0);
 }
 
+static inline int cdb_ata_smart_read_log(unsigned char *cdb, uint8_t log_addr, uint8_t num_pages)
+{
+	return cdb_ata_passthrough_12(cdb, 0xB0, 0xD5, (0xC24F<<8) | log_addr, num_pages, PT_PROTO_PIO_DATA_IN, true, 0);
+}
 
 static inline int cdb_ata_smart_read_threshold(unsigned char *cdb)
 {

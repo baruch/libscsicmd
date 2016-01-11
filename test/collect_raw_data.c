@@ -457,6 +457,35 @@ static void do_ata_read_log_ext(int fd)
 	}
 }
 
+static int do_ata_smart_read_log_addr(int fd, unsigned char *buf, unsigned buf_sz, uint8_t log_addr, uint8_t block_count)
+{
+	uint8_t cdb[32];
+	int cdb_len;
+
+	cdb_len = cdb_ata_smart_read_log(cdb, log_addr, block_count);
+	return simple_command(fd, cdb, cdb_len, buf, buf_sz);
+}
+
+static void do_ata_smart_read_log(int fd)
+{
+	unsigned log_addr;
+	uint8_t  __attribute__((aligned(512))) buf[512];
+	uint8_t  __attribute__((aligned(512))) buf_data[512*256];
+
+	int ret = do_ata_smart_read_log_addr(fd, buf, sizeof(buf), 0, 1);
+	if (ret < (int)sizeof(buf))
+		return;
+
+	for (log_addr = 1; log_addr < 255; log_addr++) {
+		unsigned num_pages = buf[log_addr*2];
+		if (num_pages > 0) {
+			printf("SMART READ LOG log addr %02X pages %u\n", log_addr, num_pages);
+			fflush(stdout);
+			do_ata_smart_read_log_addr(fd, buf_data, 512*num_pages, log_addr, num_pages);
+		}
+	}
+}
+
 void do_command(int fd)
 {
 	debug = 0;
@@ -478,5 +507,6 @@ void do_command(int fd)
 		do_ata_smart_read_data(fd);
 		do_ata_smart_read_threshold(fd);
 		do_ata_read_log_ext(fd);
+		do_ata_smart_read_log(fd);
 	}
 }
