@@ -117,7 +117,7 @@ static inline ata_qword_t ata_get_qword(const unsigned char *buf, int start_word
 	return qword;
 }
 
-bool ata_inquiry_checksum_verify(const char *buf, int buf_len);
+bool ata_inquiry_checksum_verify(const unsigned char *buf, int buf_len);
 
 static inline unsigned char ata_passthrough_flags_2(int offline, int ck_cond, int direction_in, int transfer_block, ata_passthrough_len_spec_e len_spec)
 {
@@ -237,7 +237,10 @@ typedef struct ata_smart_thresh {
 	uint8_t threshold;
 } ata_smart_thresh_t;
 
-static inline uint8_t ata_calc_ata_smart_read_data_checksum(const unsigned char *buf) {
+/** Calculate the page checksum for an ATA buffer, this is needed on ATA IDENTIFY DEVICE and in SMART commands.
+ * We assume the buffer size is 512 always.
+ */
+static inline uint8_t ata_calc_checksum(const unsigned char *buf) {
 	unsigned val = 0;
 	int i;
 	for (i = 0; i < 511; i++)
@@ -245,12 +248,16 @@ static inline uint8_t ata_calc_ata_smart_read_data_checksum(const unsigned char 
 	return 0x100 - (val & 0xFF); // We want the complement
 }
 
+static inline bool ata_checksum_verify(const unsigned char *buf) {
+	return ata_calc_checksum(buf) == buf[511];
+}
+
 static inline uint8_t ata_get_ata_smart_read_data_checksum(const unsigned char *buf) {
 	return buf[511];
 }
 
 static inline bool ata_check_ata_smart_read_data_checksum(const unsigned char *buf) {
-	return ata_get_ata_smart_read_data_checksum(buf) == ata_calc_ata_smart_read_data_checksum(buf);
+	return ata_checksum_verify(buf);
 }
 
 uint16_t ata_get_ata_smart_read_data_version(const unsigned char *buf);
