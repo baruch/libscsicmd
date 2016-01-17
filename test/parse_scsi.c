@@ -147,6 +147,9 @@ static void parse_log_sense_param_counter(uint8_t *param, unsigned param_len)
 	unsigned data_len = log_sense_param_len(param);
 
 	switch (data_len) {
+		case 2:
+			printf("Counter 16bit: %u\n", get_uint16(data, 0));
+			break;
 		case 4:
 			printf("Counter 32bit: %u\n", get_uint32(data, 0));
 			break;
