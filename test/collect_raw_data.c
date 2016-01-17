@@ -89,7 +89,7 @@ static int simple_command(int fd, uint8_t *cdb, unsigned cdb_len, uint8_t *buf, 
 static void do_simple_inquiry(int fd)
 {
 	unsigned char cdb[32];
-	unsigned char buf[512];
+	unsigned char buf[128];
 	unsigned cdb_len = cdb_inquiry_simple(cdb, sizeof(buf));
 	int buf_len;
 
