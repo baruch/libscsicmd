@@ -141,7 +141,7 @@ static void do_simple_inquiry(int fd)
 {
 	unsigned char cdb[32];
 	unsigned char buf[512] ;
-	unsigned cdb_len = cdb_inquiry_simple(cdb, sizeof(buf));
+	unsigned cdb_len = cdb_inquiry_simple(cdb, 96);
 
 	bool ret = submit_cmd(fd, cdb, cdb_len, buf, sizeof(buf), SG_DXFER_FROM_DEV);
 	if (!ret) {
