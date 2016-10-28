@@ -14,7 +14,7 @@ static void parse_sense_key_specific(unsigned char *sks, sense_info_t *info)
                                 info->sense_key_specific.illegal_request.command_error = sense_key_specific & 0x400000;
                                 info->sense_key_specific.illegal_request.bit_pointer_valid = sense_key_specific & 0x080000;
                                 info->sense_key_specific.illegal_request.bit_pointer = (sense_key_specific & 0x070000) >> 16;
-                                info->sense_key_specific.illegal_request.command_error = sense_key_specific & 0xFFFF;
+                                info->sense_key_specific.illegal_request.field_pointer = sense_key_specific & 0xFFFF;
                                 break;
                         case SENSE_KEY_HARDWARE_ERROR:
                         case SENSE_KEY_MEDIUM_ERROR:
