@@ -167,8 +167,17 @@ typedef struct sense_info_t {
 bool scsi_parse_sense(unsigned char *sense, int sense_len, sense_info_t *info);
 
 /* inquiry */
+
+/** Build a CDB from the inquiry command.
+ */
 int cdb_inquiry(unsigned char *cdb, bool evpd, char page_code, uint16_t alloc_len);
+
+/** Build a CDB from the simple inquiry command that returns the basic information.
+ * The size can be up to 256 bytes but in order to be able to handle older SCSI devices it is recommended to use the size of 96 bytes.
+ */
 static inline int cdb_inquiry_simple(unsigned char *cdb, uint16_t alloc_len) { return cdb_inquiry(cdb, 0, 0, alloc_len); }
+
+/** Parse the simple inquiry page data. */
 bool parse_inquiry(unsigned char *buf, unsigned buf_len, int *device_type, scsi_vendor_t vendor,
                    scsi_model_t model, scsi_fw_revision_t rev, scsi_serial_t serial);
 
