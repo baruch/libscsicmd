@@ -32,8 +32,8 @@ bool parse_inquiry(unsigned char *buf, unsigned buf_len, int *device_type, scsi_
                 return false;
 
         unsigned char fmt = buf[3] & 0xf; 
-        if (fmt != 2 && fmt != 1) {
-                fprintf(stderr, "Data not in standard format (%d but expected 2)\n", fmt);
+        if (fmt > 2) {
+                fprintf(stderr, "Data not in standard format (%d but expected <=2)\n", fmt);
                 return false;
         }
 
