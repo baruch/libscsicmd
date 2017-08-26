@@ -11,4 +11,10 @@ set(CMAKE_C_FLAGS_DEBUG "-Werror -O0 ${CMAKE_C_FLAGS_DEBUG}")
 set(CMAKE_C_FLAGS_RELEASE "-Wall -O3 ${CMAKE_C_FLAGS_RELEASE}")
 
 add_subdirectory(src)
-add_subdirectory(test)
+
+if (${CMAKE_PROJECT_NAME} STREQUAL "libscsicmd")
+    add_subdirectory(test)
+    MESSAGE(STATUS "top level project, compiling tests")
+else()
+    MESSAGE(STATUS "tests will not be compiled")
+endif()
