@@ -3,12 +3,12 @@ add_library(testlib STATIC main.c sense_dump.c)
 add_executable(ata_check_power_mode ata_check_power_mode.c)
 target_link_libraries(ata_check_power_mode testlib scsicmd)
 
-add_custom_command(OUTPUT ata_identify_dump.h
-                   COMMAND ../structs/ata_struct_2_h_dump.py ../structs/ata_identify.yaml > ata_identify_dump.h
-                   DEPENDS ../structs/ata_struct_2_h_dump.py ../structs/ata_identify.yaml)
-add_custom_command(OUTPUT ata_identify_dump.c
-                   COMMAND ../structs/ata_struct_2_c_dump.py ../structs/ata_identify.yaml > ata_identify_dump.c
-                   DEPENDS ../structs/ata_struct_2_c_dump.py ../structs/ata_identify.yaml)
+add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/ata_identify_dump.h
+                   COMMAND ${PROJECT_SOURCE_DIR}/structs/ata_struct_2_h_dump.py ${PROJECT_SOURCE_DIR}/structs/ata_identify.yaml > ${CMAKE_CURRENT_SOURCE_DIR}/ata_identify_dump.h
+                   DEPENDS ${PROJECT_SOURCE_DIR}/structs/ata_struct_2_h_dump.py ${PROJECT_SOURCE_DIR}/structs/ata_identify.yaml)
+add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/ata_identify_dump.c
+                   COMMAND ${PROJECT_SOURCE_DIR}/structs/ata_struct_2_c_dump.py ${PROJECT_SOURCE_DIR}/structs/ata_identify.yaml > ${CMAKE_CURRENT_SOURCE_DIR}/ata_identify_dump.c
+                   DEPENDS ${PROJECT_SOURCE_DIR}/structs/ata_struct_2_c_dump.py ${PROJECT_SOURCE_DIR}/structs/ata_identify.yaml)
 add_executable(ata_identify ata_identify.c ata_identify_dump.c ata_identify_dump.h)
 target_link_libraries(ata_identify testlib scsicmd)
 
